@@ -54,4 +54,4 @@ dkms.conf
 .vscode/
 *.pdf
 checker_linux
-cub3D
+webserv
