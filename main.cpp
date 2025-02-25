@@ -12,7 +12,7 @@
 #include <iostream>
 #include "header/WebServerConfig.hpp"
 #include "header/GlobalServer.hpp"
-
+#include "header/ReqServer.hpp"
 
 int main(int argc, char**argv)
 {
@@ -54,7 +54,8 @@ int main(int argc, char**argv)
             }
         }
 
-				AServer *globalServer = new GlobalServer(webServerConfig);
+				// AServer *globalServer = new GlobalServer(webServerConfig);
+				AServer *globalServer = new ReqServer();
         globalServer->startServer();
 				delete globalServer;
     }
