@@ -9,7 +9,7 @@
 /*   Updated: 2025/02/22 21:58:42 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "utilConfig.hpp"
+#include "../header/utilConfig.hpp"
 
 std::string trim(const std::string& str)
 {

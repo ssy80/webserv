@@ -9,7 +9,7 @@
 /*   Updated: 2025/02/22 19:53:46 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "WebServerConfig.hpp"
+#include "../header/WebServerConfig.hpp"
 
 WebServerConfig::WebServerConfig(){}
 

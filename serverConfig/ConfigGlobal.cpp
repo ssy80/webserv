@@ -9,7 +9,7 @@
 /*   Updated: 2025/02/22 19:52:55 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "ConfigGlobal.hpp"
+#include "../header/ConfigGlobal.hpp"
 
 ConfigGlobal::ConfigGlobal(){}
 
