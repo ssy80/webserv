@@ -22,7 +22,7 @@
 # include <sstream>
 # include <limits>
 
-
+using std::string;
 
 class WebServerConfig
 {
@@ -30,9 +30,9 @@ class WebServerConfig
         ConfigGlobal configGlobal;
         std::vector<ConfigServer> configServerVec;
 
-        std::string readFile(std::string filePath); 
-        std::string getGlobalStr(std::string configStr);
-        std::vector<std::string> getServerStr(std::string configFileStr);
+        string readFile(string filePath); 
+        string getGlobalStr(string configStr);
+        std::vector<string> getServerStr(string configFileStr);
 
     public:
         WebServerConfig();
@@ -43,7 +43,7 @@ class WebServerConfig
         ConfigGlobal getConfigGlobal();
         std::vector<ConfigServer> getConfigServerVec();
         
-        void parseWebServerConfigFile(std::string configFile);
+        void parseWebServerConfigFile(string configFile);
 
 };
 
