@@ -9,7 +9,7 @@
 /*   Updated: 2025/02/23 21:08:18 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "GlobalServer.hpp"
+#include "../header/GlobalServer.hpp"
 
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
 
