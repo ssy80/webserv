@@ -19,7 +19,8 @@ class Request {
 		string url;
 		string version;
 		map<string, string> headers;
-		string body;
+    map<string, string> formFields;  // For non-file form fields
+    map<string, string> files;       // For file contents (filename -> file content)
 
 		Request();
 		~Request();
