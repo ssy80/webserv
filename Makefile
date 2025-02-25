@@ -1,21 +1,28 @@
 DIR			= .
 DIR_SERVER_CONFIG = ./serverConfig
 DIR_SERVER  = ./server
+DIR_REQ  = ./request
 
-SRC			= ${DIR}/main.cpp \
-			  ${DIR_SERVER_CONFIG}/WebServerConfig.cpp \
-			  ${DIR_SERVER_CONFIG}/ConfigGlobal.cpp \
-			  ${DIR_SERVER_CONFIG}/ConfigLocation.cpp \
-			  ${DIR_SERVER_CONFIG}/ConfigServer.cpp \
-			  ${DIR_SERVER_CONFIG}/utilConfig.cpp \
-			  ${DIR_SERVER}/GlobalServer.cpp
+SRC	= ${wildcard ${DIR_SERVER}/*.cpp} \
+			${wildcard ${DIR_REQ}/*.cpp} \
+			${wildcard ${DIR}/*.cpp} \
+			${wildcard ${DIR_SERVER_CONFIG}/*.cpp} \
+			# ${DIR}/main.cpp \
+			# ${DIR_SERVER_CONFIG}/WebServerConfig.cpp \
+			# ${DIR_SERVER_CONFIG}/ConfigGlobal.cpp \
+			# ${DIR_SERVER_CONFIG}/ConfigLocation.cpp \
+			# ${DIR_SERVER_CONFIG}/ConfigServer.cpp \
+			# ${DIR_SERVER_CONFIG}/utilConfig.cpp \
+			# ${DIR_SERVER}/GlobalServer.cpp
 
-HEADER      = ${INCLUDE}/WebServerConfig.hpp \
-			  ${INCLUDE}/ConfigGlobal.hpp \
-			  ${INCLUDE}/ConfigLocation.hpp \
-			  ${INCLUDE}/ConfigServer.hpp \
-			  ${INCLUDE}/utilConfig.hpp \
-			  ${INCLUDE}/GlobalServer.hpp
+HEADER= ${wildcard ${INCLUDE}/*.hpp} \
+				# ${INCLUDE}/WebServerConfig.hpp \
+			  # ${INCLUDE}/ConfigGlobal.hpp \
+			  # ${INCLUDE}/ConfigLocation.hpp \
+			  # ${INCLUDE}/ConfigServer.hpp \
+			  # ${INCLUDE}/utilConfig.hpp \
+			  # ${INCLUDE}/utilConfig.hpp \
+			  # ${INCLUDE}/GlobalServer.hpp
 
 OBJS		= ${SRC:.cpp=.o}
 
@@ -47,3 +54,6 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
+
+run: ${NAME}
+	./${NAME} config.txt
