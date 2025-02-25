@@ -1,0 +1,72 @@
+[global]
+
+    backlog = 100
+    timeout = 0
+	max_body_size = 8300000
+    max_clients = 100
+	max_events = 100
+	backlog = 10
+
+[/global]
+
+[server]
+
+listen = 8080
+server_name = localhost
+
+root = /data/www
+index = index.html
+
+max_body_size = 10000
+
+autoindex = false
+
+error_page 404 = /error/404.html
+error_page 500 = /error/500.html
+
+methods = POST GET DELETE
+
+
+[location]
+    request_path = /
+    root = ./www
+    index = index.html
+    autoindex = on
+    methods = POST GET DELETE
+    max_body_size = 10000
+    error_page 404 = ./error/404.html
+    error_page 500 = ./error/500.html
+[/location]
+
+[location]
+    request_path = /images/
+    root = /data/
+    autoindex = on
+    methods = POST GET DELETE
+[/location]
+
+
+[location]
+    request_path = /old-page
+    return 301 = /new-page
+[/location]
+
+[/server]
+
+[server]
+
+listen = 8888
+server_name = localhost
+root = /data/www2
+index = index.html
+
+max_body_size = 1000
+
+autoindex = true
+
+error_page 404 = /error/404.html
+error_page 500 = /error/500.html
+
+methods = POST GET DELETE
+
+[/server]
