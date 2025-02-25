@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include <iostream>
-#include "WebServerConfig.hpp"
-#include "GlobalServer.hpp"
+#include "header/WebServerConfig.hpp"
+#include "header/GlobalServer.hpp"
 
 
 int main(int argc, char**argv)
@@ -19,7 +19,7 @@ int main(int argc, char**argv)
     (void) argv;
     if (argc != 2)
     {
-        std::cout << "need config file" << std::endl;
+        cout << "need config file" << endl;
         return (0);
     }
     else
@@ -30,34 +30,33 @@ int main(int argc, char**argv)
         ConfigGlobal configGlobal = webServerConfig.getConfigGlobal();                                        //object for [global] [/global] 
         std::vector<ConfigServer> configServerVec = webServerConfig.getConfigServerVec();                     //objects for [server] [/server] in vector 
         
-        std::cout << "[global]" << std::endl;
+        cout << "[global]" << endl;
         printMap(configGlobal.getKeyValueMap());                                                             // key/value map for [global] [/global] 
-        std::cout << std::endl;
+        cout << endl;
         
         std::vector<ConfigServer>::iterator it;
         for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                 //loop server vector 
         {
-            std::cout << "[server]" << std::endl;                                                           
+            cout << "[server]" << endl;                                                           
             ConfigServer configServer = (*it);                                                               // get the sever object
             printMap(configServer.getKeyValueMap());                                                        // get key/value for each server
-            std::cout << std::endl;
+            cout << endl;
 
             std::vector<ConfigLocation> configLocationVec = configServer.getConfigLocationVec();           //objects for [location][/location] in vector for each [server]
         
             std::vector<ConfigLocation>::iterator locationIt;
             for (locationIt = configLocationVec.begin(); locationIt <  configLocationVec.end(); locationIt++)
             {
-                std::cout << "[location]" << std::endl;
+                cout << "[location]" << endl;
                 ConfigLocation configLocation = (*locationIt);
                 printMap(configLocation.getKeyValueMap());                                                    //key/value for each [location]
-                std::cout << std::endl;
+                cout << endl;
             }
         }
 
-        GlobalServer globalServer(webServerConfig);
-        globalServer.startServer();
-
-
+				AServer *globalServer = new GlobalServer(webServerConfig);
+        globalServer->startServer();
+				delete globalServer;
     }
     return (0);
 }

@@ -25,11 +25,12 @@
 # include <cstdlib>
 # include <limits>
 # include <cstring>
+# include "AServer.hpp"
 
 
 # define READ_BUFFER 1024
 
-class GlobalServer
+class GlobalServer : public AServer
 {
     private:
 
