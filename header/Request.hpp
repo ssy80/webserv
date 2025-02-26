@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __REQUEST_H__
-#define __REQUEST_H__
+#ifndef __REQUEST_HPP
+#define __REQUEST_HPP
 
 #include <iostream>
 #include <string>

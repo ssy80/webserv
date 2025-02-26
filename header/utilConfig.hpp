@@ -9,6 +9,11 @@
 /*   Updated: 2025/02/22 21:58:27 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#pragma once
+#ifndef __UTILCONFIG_HPP
+#define __UTILCONFIG_HPP
+
 #include <iostream>
 #include <cerrno>
 #include <map>
@@ -34,3 +39,5 @@ std::vector<std::string> extractBetweenBlockVec(std::string configStr, std::stri
 std::string extractBlock(std::string configStr, std::string startMarker, std::string endMarker);
 
 int parseContentLength(const std::string& request);
+
+#endif

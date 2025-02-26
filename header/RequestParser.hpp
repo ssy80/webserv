@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __REQUESTPARSER_H__
-#define __REQUESTPARSER_H__
+#ifndef __REQUESTPARSER_HPP
+#define __REQUESTPARSER_HPP
 
 #include "Request.hpp"
 

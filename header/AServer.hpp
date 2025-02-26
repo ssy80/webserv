@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __ASERVER_H__
-#define __ASERVER_H__
+#ifndef __ASERVER_HPP
+#define __ASERVER_HPP
 
 #include <iostream>
 #include <string>

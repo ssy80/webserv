@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __REQSERVER_H__
-#define __REQSERVER_H__
+#ifndef __REQSERVER_HPP
+#define __REQSERVER_HPP
 
 #include <iostream>
 #include <cstring>
