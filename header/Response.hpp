@@ -1,5 +1,13 @@
-#ifndef CONSTANT_HPP
-# define CONSTANT_HPP
+#ifndef RESPONSE_HPP
+# define RESPONSE_HPP
+
+#include "AServer.hpp"
+#include <sstream>
+
+using std::stringstream;
+
+#define CLRF "\r\n"
+#define HTTPVERSION "HTTP/1.1"
 
 // info
 #define SC100 "100 Continue"
@@ -57,5 +65,29 @@
 #define SC503 "503 Service Unavailable"
 #define SC504 "504 Gateway Timeout"
 #define SC505 "505 HTTP Version Not Supported"
+
+class Response{
+	private:
+		string statusCode;
+		string contentType;
+		int contentLength;
+
+	public:
+		class ResBuilder{
+			public:
+				string statusCode;
+				string contentType;
+				int contentLength;
+
+				ResBuilder();
+				ResBuilder* sc(const string code);
+				ResBuilder* ct(const string type);
+				ResBuilder* cl(int len);
+				Response build();
+		};
+
+		Response(ResBuilder builder);
+		string toString();
+};
 
 #endif

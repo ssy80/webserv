@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "../header/ReqServer.hpp"
+#include "../header/Response.hpp"
 
 #define PORT 8080
 
@@ -34,8 +35,16 @@ void handle_client(int client_socket) {
 			"Connection: close\r\n"
 			"\r\n"
 			"Hello, Telnet client!\r\n";
+	
+	Response res = Response::ResBuilder()
+									.sc(SC200)
+									->ct("Content-Type: text/plain")
+									->cl(strlen("Hello, client!\r\n"))
+									->build();
+	string test = res.toString().append("Hello, client!\r\n");
+	cout <<"this is response obj: \n" << test << endl;
 
-	int bytes_sent = send(client_socket, response, strlen(response), 0);
+	int bytes_sent = send(client_socket, test.c_str(), strlen(response), 0);
 	if (bytes_sent < 0) {
 			std::cerr << "Error sending response" << endl;
 			return;

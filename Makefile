@@ -2,9 +2,11 @@ DIR			= .
 DIR_SERVER_CONFIG = ./serverConfig
 DIR_SERVER  = ./server
 DIR_REQ  = ./request
+DIR_RES  = ./response
 
 SRC	= ${wildcard ${DIR_SERVER}/*.cpp} \
 			${wildcard ${DIR_REQ}/*.cpp} \
+			${wildcard ${DIR_RES}/*.cpp} \
 			${wildcard ${DIR}/*.cpp} \
 			${wildcard ${DIR_SERVER_CONFIG}/*.cpp} \
 			# ${DIR}/main.cpp \
