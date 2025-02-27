@@ -12,7 +12,7 @@
 #include "Request.hpp"
 #include "RequestParser.hpp"
 
-#define PORT 8080
+#define PORT 9999
 
 class ReqServer : public AServer{
 	~ReqServer();

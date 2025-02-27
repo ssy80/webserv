@@ -8,15 +8,15 @@
 #include "../header/Response.hpp"
 #include "../header/MIME.hpp"
 
-#define PORT 8080
+#define PORT 9999
 
-vector<unsigned char> readFile(const string& resource){
+std::string readFile(const string& resource){
 	ifstream file;
-	vector<unsigned char> output;
+	std::string output;
 	output.reserve(2048);
 	file.open(resource.c_str(), ios::binary);
 	if (!file)
-	return output;
+		return output;
 	file >> noskipws;
 	while (!file.eof()){
 		unsigned char ch;
@@ -29,6 +29,30 @@ vector<unsigned char> readFile(const string& resource){
 
 ReqServer::~ReqServer()
 {}
+
+std::string executeCGI(const std::string& scriptPath) {
+    std::ostringstream output;
+    FILE* pipe = popen(scriptPath.c_str(), "r"); // Execute CGI script
+    if (!pipe)
+		return "Error executing script";
+
+    char buffer[128];
+    while (fgets(buffer, sizeof(buffer), pipe)) {
+        output << buffer;
+    }
+    pclose(pipe);
+    return output.str();
+}
+
+std::string handle_request(Request& req) {
+	std::string path = req.url;
+
+	if (path == "/" || path == "/index.html")
+		return readFile("./www/index.html");
+	else if (path == "/cgi-bin/time.py")
+		return executeCGI("./www/cgi-bin/time.py");
+	return "";
+}
 
 void handle_client(int client_socket) {
 	char buffer[1024];
@@ -53,12 +77,12 @@ void handle_client(int client_socket) {
 	// 		"Connection: close\r\n"
 	// 		"\r\n"
 	// 		"Hello, Telnet client!\r\n";
-			
-	vector<unsigned char> file = readFile("./www/index.html");
+
 	// for (unsigned int i=0; i<file.size();i++)
 	// 	cout << file[i];
 	// cout << '\n';
 
+	std::string file = handle_request(req);
 	Response res = Response::ResBuilder()
 									.sc(SC200)
 									->ct(MIME::KEY + MIME::HTML)
