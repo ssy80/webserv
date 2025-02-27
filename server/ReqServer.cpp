@@ -6,8 +6,26 @@
 #include <sys/socket.h>
 #include "../header/ReqServer.hpp"
 #include "../header/Response.hpp"
+#include "../header/MIME.hpp"
 
 #define PORT 8080
+
+vector<unsigned char> readFile(const string& resource){
+	ifstream file;
+	vector<unsigned char> output;
+	output.reserve(2048);
+	file.open(resource.c_str(), ios::binary);
+	if (!file)
+	return output;
+	file >> noskipws;
+	while (!file.eof()){
+		unsigned char ch;
+		file >> ch;
+		output.push_back(ch);
+	}
+	file.close();
+	return output;	
+}
 
 ReqServer::~ReqServer()
 {}
@@ -29,22 +47,32 @@ void handle_client(int client_socket) {
 	// cout << buffer << endl;
 
 	// Send an HTTP response
-	const char* response = 
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/plain\r\n"
-			"Connection: close\r\n"
-			"\r\n"
-			"Hello, Telnet client!\r\n";
-	
+	// const char* response = 
+	// 		"HTTP/1.1 200 OK\r\n"
+	// 		"Content-Type: text/plain\r\n"
+	// 		"Connection: close\r\n"
+	// 		"\r\n"
+	// 		"Hello, Telnet client!\r\n";
+			
+	vector<unsigned char> file = readFile("./www/index.html");
+	// for (unsigned int i=0; i<file.size();i++)
+	// 	cout << file[i];
+	// cout << '\n';
+
 	Response res = Response::ResBuilder()
 									.sc(SC200)
-									->ct("Content-Type: text/plain")
-									->cl(strlen("Hello, client!\r\n"))
+									->ct(MIME::KEY + MIME::HTML)
+									->mc("Connection: close")
+									->cl(file.size())
 									->build();
-	string test = res.toString().append("Hello, client!\r\n");
-	cout <<"this is response obj: \n" << test << endl;
+	string output = res.toString();
+	for (int i = 0, n=file.size(); i<n;i++)
+		output += file[i];
+	output[output.size()-1] = '\0';
 
-	int bytes_sent = send(client_socket, test.c_str(), strlen(response), 0);
+	// cout <<"this is response obj: \n" << output << endl;
+
+	int bytes_sent = send(client_socket, output.c_str(), output.size(), 0);
 	if (bytes_sent < 0) {
 			std::cerr << "Error sending response" << endl;
 			return;
