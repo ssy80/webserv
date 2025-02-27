@@ -71,6 +71,7 @@ class Response{
 		string statusCode;
 		string contentType;
 		int contentLength;
+		string misc;
 
 	public:
 		class ResBuilder{
@@ -78,11 +79,14 @@ class Response{
 				string statusCode;
 				string contentType;
 				int contentLength;
+				string misc;
 
 				ResBuilder();
-				ResBuilder* sc(const string code);
-				ResBuilder* ct(const string type);
+				ResBuilder* sc(const string& code);
+				ResBuilder* ct(const string& type);
 				ResBuilder* cl(int len);
+				ResBuilder* mc(const string& extra);
+
 				Response build();
 		};
 
