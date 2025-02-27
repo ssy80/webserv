@@ -13,6 +13,7 @@
 #include "header/WebServerConfig.hpp"
 #include "header/GlobalServer.hpp"
 #include "header/ReqServer.hpp"
+#include "header/YSServer.hpp"
 
 int main(int argc, char**argv)
 {
@@ -55,6 +56,7 @@ int main(int argc, char**argv)
         }
 
 				// AServer *globalServer = new GlobalServer(webServerConfig);
+				// AServer *globalServer = new YSServer();
 				AServer *globalServer = new ReqServer();
         globalServer->startServer();
 				delete globalServer;
