@@ -3,13 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 10:39:47 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 10:39:56 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/01 20:13:41 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include <iostream>
+
 #include "header/WebServerConfig.hpp"
 #include "header/GlobalServer.hpp"
 #include "header/ReqServer.hpp"
@@ -56,8 +56,8 @@ int main(int argc, char**argv)
         }
 
 				// AServer *globalServer = new GlobalServer(webServerConfig);
-				// AServer *globalServer = new YSServer();
-				AServer *globalServer = new ReqServer();
+				AServer *globalServer = new YSServer();
+				// AServer *globalServer = new ReqServer();
         globalServer->startServer();
 				delete globalServer;
     }

@@ -3,13 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigServer.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 10:49:41 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 10:49:42 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/01 20:14:13 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#ifndef CONFIG_SEVRER_HPP
+
+#ifndef CONFIG_SERVER_HPP
 # define CONFIG_SERVER_HPP
 
 # include <vector>

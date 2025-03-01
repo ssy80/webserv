@@ -156,6 +156,71 @@ void getHandler(int client_socket, Request req){
 	sendRes(client_socket, output);
 }
 
+void postHandler(int client_socket, Request req) {
+	if (req.method != "POST")
+		return;
+	std::ifstream src(req.url.c_str(), ios::binary);
+	if (!src.good()) {
+		Response res = Response::ResBuilder()
+			.sc(SC404)
+			->mc("Connection: close")
+			->build();
+		return sendRes(client_socket, res.toString());
+	}
+
+	string dir = "./cache" + req.url;
+	std::ofstream dst(dir.c_str(), ios::binary);
+	if (!dst.good()) {
+		Response res = Response::ResBuilder()
+			.sc(SC500)
+			->mc("Connection: close")
+			->build();
+		return sendRes(client_socket, res.toString());
+	}
+
+	dst << src.rdbuf();
+	
+	// file saved, return 201
+	Response res = Response::ResBuilder()
+		.sc(SC201)
+		->mc("Connection: close")
+		->build();
+	return sendRes(client_socket, res.toString());
+}
+
+void deleteHandler(int client_socket, Request req) {
+	if (req.method != "DELETE")
+		return;
+	string dir = "./cache" + req.url;
+	ifstream f(dir.c_str());
+
+	// cannot find file, return 404
+	if (!f.good()) {
+		Response res = Response::ResBuilder()
+			.sc(SC404)
+			->mc("Connection: close")
+			->build();
+		return sendRes(client_socket, res.toString());
+	}
+
+	int status = remove(dir.c_str());
+	if (status!= 0) {
+		// file cannot be deleted, return 500
+		Response res = Response::ResBuilder()
+			.sc(SC500)
+			->mc("Connection: close")
+			->build();
+		return sendRes(client_socket, res.toString());
+	}
+
+	// file deleted, return 200
+	Response res = Response::ResBuilder()
+		.sc(SC200)
+		->mc("Connection: close")
+		->build();
+	return sendRes(client_socket, res.toString());
+}
+
 void otherHandler(int client_socket, Request req){
 	if (req.method == "GET" || req.method == "POST" || req.method == "DELETE")
 		return;

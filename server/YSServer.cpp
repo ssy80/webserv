@@ -22,6 +22,9 @@ static void handle_client(int client_socket) {
 	// handle get request
 	getHandler(client_socket, req);
 
+	postHandler(client_socket, req);
+	deleteHandler(client_socket, req);
+
 	// handle other methods that are not required.
 	otherHandler(client_socket, req);
 	// Close the client connection
