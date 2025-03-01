@@ -5,10 +5,12 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <map>
 
 using std::cout;
 using std::endl;
 using std::string;
+using std::map;
 using std::ifstream;
 using std::ios;
 using std::noskipws;
