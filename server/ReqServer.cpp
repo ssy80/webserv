@@ -10,7 +10,7 @@
 
 #define PORT 9999
 
-std::string readFile(const string& resource){
+static std::string readFile(const string& resource){
 	ifstream file;
 	std::string output;
 	output.reserve(2048);
