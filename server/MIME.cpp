@@ -6,6 +6,7 @@ MIME::~MIME()
 const string MIME::KEY = "Content-Type: ";
 const string MIME::HTML = "text/html";
 const string MIME::CSS = "text/css";
+const string MIME::XML = "text/xml";
 const string MIME::GIF = "image/gif";
 const string MIME::JPEG = "image/jpeg";
 const string MIME::JS = "application/javascript";

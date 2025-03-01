@@ -12,6 +12,7 @@ class MIME{
 		~MIME();
 		static const string KEY;
 		static const string HTML;
+		static const string XML;
 		static const string CSS;
 		static const string GIF;
 		static const string JPEG;
@@ -58,9 +59,6 @@ class MIME{
 		static const string ASF;
 		static const string WMV;
 		static const string AVI;
-		
-
-
 
 };
 
