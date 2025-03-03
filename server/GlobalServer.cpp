@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "../header/GlobalServer.hpp"
-
+#include <iostream>
 
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
 
@@ -263,6 +263,9 @@ void GlobalServer::startServer()
                 std::cout << "listen: " << hostVec[1] << std::endl;*/
                 
 std::string response = handleRequest(conn->buffer);
+std::cout << "RESPONSE: " << response << std::endl;
+
+//std:cout << "RESPONSE" << response << std::endl;
                 
 
 
@@ -490,7 +493,8 @@ std::cout << "filePath: " << filePath << std::endl;
         return postHandler(req, configLocation);
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
         return deleteHandler(req, configLocation);
-    // else return 406 errror
+    else
+        return otherHandler();
 }
 
 
