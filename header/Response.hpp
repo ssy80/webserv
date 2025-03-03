@@ -85,7 +85,7 @@ class Response{
 				ResBuilder* sc(const string& code);
 				ResBuilder* ct(const string& type);
 				ResBuilder* cl(int len);
-				ResBuilder* mc(const string& extra);
+				ResBuilder* mc(const string& key, const string& value);
 
 				Response build();
 		};

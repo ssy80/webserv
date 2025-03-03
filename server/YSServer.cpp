@@ -6,7 +6,7 @@
 YSServer::~YSServer()
 {}
 
-static void handle_client(int client_socket) {
+static void handle_client(int client_socket, string dir) {
 	char buffer[1024];
 	
 	// Read the request from the client (Telnet)
@@ -18,9 +18,9 @@ static void handle_client(int client_socket) {
 	buffer[bytes_received] = '\0';  // Null-terminate the buffer to make it a valid string
 	Request req = RequestParser::parseRequest(buffer);
 	// int l = req.url.length();
-	string dir = "./www";
+	// string dir = "./www";
 	// handle get request
-	getHandler(client_socket, req);
+	getHandler(client_socket, req, dir);
 
 	postHandler(client_socket, req);
 	deleteHandler(client_socket, req);
@@ -71,7 +71,7 @@ void YSServer::startServer(){
 					continue;
 			}
 			// Handle the client request
-			handle_client(client_socket);
+			handle_client(client_socket, "./www");
 	}
 
 	// Close the server socket

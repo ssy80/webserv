@@ -88,7 +88,7 @@ void handle_client(int client_socket) {
 	Response res = Response::ResBuilder()
 									.sc(SC200)
 									->ct(MIME::KEY + MIME::HTML)
-									->mc("Connection: close")
+									->mc("Connection", "close")
 									->cl(file.size())
 									->build();
 	string output = res.toString();

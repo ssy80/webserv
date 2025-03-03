@@ -22,8 +22,8 @@ Response::ResBuilder* Response::ResBuilder::cl(int len){
 	return this;
 }
 
-Response::ResBuilder* Response::ResBuilder::mc(const string& extra){
-	this->misc += extra;
+Response::ResBuilder* Response::ResBuilder::mc(const string& key, const string& value){
+	this->misc += key + ": " + value + CLRF;
 	return this;
 }
 
@@ -46,7 +46,7 @@ string Response::toString(){
 		ss << this->contentType << CLRF;
 	// extra header stuff
 	if (!this->misc.empty())
-		ss << this->misc << CLRF;
+		ss << this->misc;
 	// content length
 	ss << "Content-Length: " <<this->contentLength << CLRF << CLRF;
 	return ss.str();

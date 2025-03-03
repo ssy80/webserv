@@ -129,17 +129,17 @@ string filetype(const string& url){
 }
 
 
-void getHandler(int client_socket, Request req){
+void getHandler(int client_socket, Request req, string dir){
 	if (req.method != "GET")
 		return;
-	string dir = "./www";
+	// string dir = "./www";
 	dir += req.url;
 	ifstream f(dir.c_str());
 	// cannot find file, return 404
 	if (!f.good()){
 		Response res = Response::ResBuilder()
 			.sc(SC404)
-			->mc("Connection: close")
+			->mc("Connection", "close")
 			->build();
 		return sendRes(client_socket, res.toString());
 	}
@@ -149,7 +149,7 @@ void getHandler(int client_socket, Request req){
 		Response res = Response::ResBuilder()
 		.sc(SC200)
 		->ct(MIME::KEY + MIME::HTML)
-		->mc("Connection: close")
+		->mc("Connection", "close")
 		->cl(file.size())
 		->build();
 		string output = res.toString();
@@ -161,11 +161,11 @@ void getHandler(int client_socket, Request req){
 	
 	// getting cgi files
 	if (req.url == "/cgi-bin/time.py" || req.url == "/cgi-bin/image.py") {
-		vector<unsigned char> file = readCGI("./www" + req.url);
+		vector<unsigned char> file = readCGI(dir + req.url);
 		Response res = Response::ResBuilder()
 		.sc(SC200)
 		->ct(MIME::KEY + MIME::HTML)
-		->mc("Connection: close")
+		->mc("Connection", "close")
 		->cl(file.size())
 		->build();
 		string output = res.toString();
@@ -180,7 +180,7 @@ void getHandler(int client_socket, Request req){
 	Response res = Response::ResBuilder()
 		.sc(SC200)
 		->ct(MIME::KEY + filetype(dir))
-		->mc("Connection: close")
+		->mc("Connection", "close")
 		->cl(file.size())
 		->build();
 	string output = res.toString();
@@ -197,7 +197,7 @@ void postHandler(int client_socket, Request req) {
 	if (!src.good()) {
 		Response res = Response::ResBuilder()
 			.sc(SC404)
-			->mc("Connection: close")
+			->mc("Connection", "close")
 			->build();
 		return sendRes(client_socket, res.toString());
 	}
@@ -207,7 +207,7 @@ void postHandler(int client_socket, Request req) {
 	if (!dst.good()) {
 		Response res = Response::ResBuilder()
 			.sc(SC500)
-			->mc("Connection: close")
+			->mc("Connection", "close")
 			->build();
 		return sendRes(client_socket, res.toString());
 	}
@@ -217,7 +217,7 @@ void postHandler(int client_socket, Request req) {
 	// file saved, return 201
 	Response res = Response::ResBuilder()
 		.sc(SC201)
-		->mc("Connection: close")
+		->mc("Connection", "close")
 		->build();
 	return sendRes(client_socket, res.toString());
 }
@@ -232,7 +232,7 @@ void deleteHandler(int client_socket, Request req) {
 	if (!f.good()) {
 		Response res = Response::ResBuilder()
 			.sc(SC404)
-			->mc("Connection: close")
+			->mc("Connection", "close")
 			->build();
 		return sendRes(client_socket, res.toString());
 	}
@@ -242,7 +242,7 @@ void deleteHandler(int client_socket, Request req) {
 		// file cannot be deleted, return 500
 		Response res = Response::ResBuilder()
 			.sc(SC500)
-			->mc("Connection: close")
+			->mc("Connection", "close")
 			->build();
 		return sendRes(client_socket, res.toString());
 	}
@@ -250,7 +250,7 @@ void deleteHandler(int client_socket, Request req) {
 	// file deleted, return 200
 	Response res = Response::ResBuilder()
 		.sc(SC200)
-		->mc("Connection: close")
+		->mc("Connection", "close")
 		->build();
 	return sendRes(client_socket, res.toString());
 }
@@ -260,7 +260,7 @@ void otherHandler(int client_socket, Request req){
 		return;
 	Response res = Response::ResBuilder()
 		.sc(SC406)
-		->mc("Connection: close")
+		->mc("Connection", "close")
 		->build();
 	sendRes(client_socket, res.toString());
 }
