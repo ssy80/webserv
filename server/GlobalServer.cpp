@@ -483,25 +483,13 @@ std::string GlobalServer::handleRequest(std::string requestStr)
 
 std::cout << "filePath: " << filePath << std::endl;
 
-std::string output;
-
     if (req.method == "GET" && isContainIn(methods, "GET"))
-    {
-        //read file
-        std::string file = readServerFile(filePath);
-
-        Response res = Response::ResBuilder()
-									.sc(SC200)
-									->ct(MIME::KEY + MIME::HTML)
-									->mc("Connection: close")
-									->cl(file.size())
-									->build();
-	    output = res.toString();
-
-        output = output + file + '\0';
-
-    }
-    return (output);
+        return getHandler(req, configLocation);
+    else if (req.method == "POST" && isContainIn(methods, "POST"))
+        return postHandler(req, configLocation);
+    else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
+        return deleteHandler(req, configLocation);
+    // else return 406 errror
 }
 
 
