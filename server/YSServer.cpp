@@ -2,9 +2,18 @@
 #include "../header/Response.hpp"
 #include "../header/MIME.hpp"
 #include "../header/ResHelper.hpp"
+#include "../header/ConfigLocation.hpp"
 
 YSServer::~YSServer()
 {}
+
+static void sendRes(int client_socket, const string& output){
+	int bytes_sent = send(client_socket, output.c_str(), output.size(), 0);
+	if (bytes_sent < 0) {
+			std::cerr << "Error sending response" << endl;
+			return;
+	}
+}
 
 static void handle_client(int client_socket, string dir) {
 	if (dir.empty())
@@ -18,18 +27,28 @@ static void handle_client(int client_socket, string dir) {
 			return;
 	}
 	buffer[bytes_received] = '\0';  // Null-terminate the buffer to make it a valid string
+	
+
 	Request req = RequestParser::parseRequest(buffer);
-	// int l = req.url.length();
-	// string dir = "./www";
-	// handle get request
-	//getHandler(client_socket, req, dir, true);
+	
+	ConfigLocation configLocation;
+	std::string methods = configLocation.getMethods();
+	std::cout << "Method: " << req.method << std::endl;
+    std::cout << "URL: " << req.url << std::endl;
 
-	//postHandler(client_socket, req);
-	//deleteHandler(client_socket, req);
+	std::string resp;
 
-	// handle other methods that are not required.
-	//otherHandler(client_socket, req);
-	// Close the client connection
+    if (req.method == "GET" && isContainIn(methods, "GET")) {
+        resp = getHandler(req, configLocation);
+	} else if (req.method == "POST" && isContainIn(methods, "POST")) {
+        resp = postHandler(req, configLocation);
+	} else if (req.method == "DELETE" && isContainIn(methods, "DELETE")) {
+        resp = deleteHandler(req, configLocation);
+	} else {    
+		resp = otherHandler();
+	}
+
+	sendRes(client_socket, resp);
 	close(client_socket);
 }
 
