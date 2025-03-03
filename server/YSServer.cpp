@@ -29,22 +29,26 @@ static void handle_client(int client_socket, string dir) {
 	buffer[bytes_received] = '\0';  // Null-terminate the buffer to make it a valid string
 	
 
-	Request req = RequestParser::parseRequest(buffer);
+    Request req = RequestParser::parseRequest(buffer);
+    std::cout << "Method: " << req.method << std::endl;
+    std::cout << "URL: " << req.url << std::endl;
 	
 	ConfigLocation configLocation;
-	std::string methods = configLocation.getMethods();
-	std::cout << "Method: " << req.method << std::endl;
-    std::cout << "URL: " << req.url << std::endl;
+	configLocation.populate("on", "index.html", "POST GET DELETE", "", "/", "./www");
 
 	std::string resp;
 
-    if (req.method == "GET" && isContainIn(methods, "GET")) {
-        resp = getHandler(req, configLocation);
-	} else if (req.method == "POST" && isContainIn(methods, "POST")) {
-        resp = postHandler(req, configLocation);
-	} else if (req.method == "DELETE" && isContainIn(methods, "DELETE")) {
-        resp = deleteHandler(req, configLocation);
-	} else {    
+    if (req.method == "GET") {
+		std::cout << "entering get handler" << std::endl;      
+		resp = getHandler(req, configLocation);
+	} else if (req.method == "POST") {
+		std::cout << "entering post handler" << std::endl;      
+		resp = postHandler(req, configLocation);
+	} else if (req.method == "DELETE") {
+		std::cout << "entering delete handler" << std::endl;      
+		resp = deleteHandler(req, configLocation);
+	} else {   
+		std::cout << "entering other handler" << std::endl;
 		resp = otherHandler();
 	}
 

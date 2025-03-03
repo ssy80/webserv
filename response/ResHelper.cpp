@@ -123,7 +123,7 @@ string filetype(const string& url){
 string getHandler(Request req, ConfigLocation config) {
 	bool idx = (config.getAutoIndex() == "on");
 
-	ifstream f(req.url.c_str());
+	ifstream f((config.getRoot() + req.url).c_str());
 
 	// cannot find file, return 404
 	if (!f.good()){
@@ -188,7 +188,7 @@ string getHandler(Request req, ConfigLocation config) {
 	}
 
 	// other path
-	vector<unsigned char> file = readRequestFile(config.getRoot());
+	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
 	string res = Response::ResBuilder()
 		.sc(SC200)
 		->ct(MIME::KEY + filetype(config.getRoot()))

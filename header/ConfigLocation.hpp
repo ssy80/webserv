@@ -50,6 +50,15 @@ class ConfigLocation
         std::string getMethods();
         std::string getRedirect();
         
+        void populate(std::string Autoindex, std::string Index, std::string Methods, std::string Redirect, std::string Request_path, std::string Root) {
+            autoindex = Autoindex;
+            index = Index;
+            methods = Methods;
+            redirect = Redirect;
+            request_path = Request_path;
+            root = Root;
+        }
+        
 
     
 };
