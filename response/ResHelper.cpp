@@ -147,11 +147,11 @@ void getHandler(int client_socket, Request req, string dir){
 	if (req.url == "/" || req.url == "/index.html"){
 		vector<unsigned char> file = readFile("./www/index.html");
 		Response res = Response::ResBuilder()
-		.sc(SC200)
-		->ct(MIME::KEY + MIME::HTML)
-		->mc("Connection", "close")
-		->cl(file.size())
-		->build();
+			.sc(SC200)
+			->ct(MIME::KEY + MIME::HTML)
+			->mc("Connection: close")
+			->cl(file.size())
+			->build();
 		string output = res.toString();
 		for (int i = 0, n=file.size(); i<n;i++)
 		output += file[i];
@@ -161,18 +161,30 @@ void getHandler(int client_socket, Request req, string dir){
 	
 	// getting cgi files
 	if (req.url == "/cgi-bin/time.py" || req.url == "/cgi-bin/image.py") {
-		vector<unsigned char> file = readCGI(dir + req.url);
-		Response res = Response::ResBuilder()
-		.sc(SC200)
-		->ct(MIME::KEY + MIME::HTML)
-		->mc("Connection", "close")
-		->cl(file.size())
-		->build();
-		string output = res.toString();
-		for (int i = 0, n=file.size(); i<n;i++)
-		output += file[i];
-		output[output.size()-1] = '\0';
-		return sendRes(client_socket, output);
+		vector<unsigned char> file = readCGI("./www" + req.url);
+		
+		string contentType;
+		if (req.url == "/cgi-bin/image.py") {
+       		contentType = "Content-Type: image/png";
+		} else {
+        	contentType = "Content-Type: text/html";
+		}
+		
+		string headers = Response::ResBuilder()
+			.sc(SC200)
+			->ct(contentType)
+			->mc("Connection: close")
+			->cl(file.size())
+			->build()
+			.toString();
+
+		// convert headers to binary format
+		vector<unsigned char> response(headers.begin(), headers.end());
+
+		// append binary CGI output
+		response.insert(response.end(), file.begin(), file.end());
+
+		send(client_socket, response.data(), response.size(), 0);
 	}
 
 	// other path
