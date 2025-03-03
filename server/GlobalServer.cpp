@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 #include "../header/GlobalServer.hpp"
 
+
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
 
 GlobalServer::~GlobalServer(){}
@@ -481,9 +482,9 @@ std::string GlobalServer::handleRequest(std::string requestStr)
 
     std::string filePath = replacePath(req.url, requestPath, root);
 
-std::cout << "filePath: " << filePath << std::endl;
+    std::cout << "filePath: " << filePath << std::endl;
 
-std::string output;
+    std::string output;
 
     if (req.method == "GET" && isContainIn(methods, "GET"))
     {
@@ -493,7 +494,7 @@ std::string output;
         Response res = Response::ResBuilder()
 									.sc(SC200)
 									->ct(MIME::KEY + MIME::HTML)
-									->mc("Connection: close")
+									->mc("Connection", "close")
 									->cl(file.size())
 									->build();
 	    output = res.toString();
