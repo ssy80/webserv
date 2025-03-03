@@ -82,8 +82,11 @@ void GlobalServer::startServer()
     std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec(); //get number of [server]
     ConfigGlobal configGlobal = this->webServerConfig.getConfigGlobal();                    //get global [global]
 
-    int num_ports = configServerVec.size();                                                 //num of listening port depend on number of server                                                           //vector of ports to listen
-    std::vector<int> listenFdsVec;
+    //int num_ports = configServerVec.size();                                                 //num of listening port depend on number of server   
+    std::vector<int> uniquePortsVec = this->webServerConfig.getUniquePortsVec();
+    int num_ports = uniquePortsVec.size();
+
+    std::vector<int> listenFdsVec;                                                          //vector of fds to listen
     
     this->epoll_fd = epoll_create(10);                                                      //Create epoll instance.
     if (this->epoll_fd < 0) 
@@ -97,7 +100,8 @@ void GlobalServer::startServer()
     for (int i = 0; i < num_ports; i++)                                                      // Set up listening sockets for num of servers
     {
         //port  = stringToInt((configServerVec[i].getKeyValueMap())["listen"]);               //get [server] listening=8080
-        port  = std::atoi((configServerVec[i].getKeyValueMap())["listen"].c_str());               //get [server] listening=8080
+        //port  = std::atoi((configServerVec[i].getKeyValueMap())["listen"].c_str());               //get [server] listening=8080
+        port = uniquePortsVec[i];
         
         sockfd = createAndBind(port);                                                       //bind the port to listen
 
@@ -223,6 +227,8 @@ void GlobalServer::startServer()
                     continue;
                 }
 
+    std::cout << "1max_body_size: " << getMaxBodySize(conn->buffer) << std::endl;
+
                 
                 int contentLength = parseContentLength(conn->buffer);    // Parse Content-Length from header
                 if (contentLength < 0) 
@@ -244,20 +250,37 @@ void GlobalServer::startServer()
                 // (For a real server, you'd parse headers, Content-Length, etc.)
                 // Send a fixed HTTP response.
 
+         /*       Request req = RequestParser::parseRequest(conn->buffer);
+                //req.print();
+                std::cout << "Method: " << req.method << std::endl;
+                std::cout << "URL: " << req.url << std::endl;
+                //std::map<string, string> headers = req.headers;    
+                //std::cout << "Host: " << headers["Host"] << std::endl;
+                std::string hostStr = parseHeaderField(conn->buffer, "Host:");
+                std::vector<std::string> hostVec = splitHost(hostStr);
+                std::cout << "server_name: " << hostVec[0] << std::endl;
+                std::cout << "listen: " << hostVec[1] << std::endl;*/
+                
+std::string response = handleRequest(conn->buffer);
+                
+
+
+         //       std::string file = handle_request(req);
 
             //send response
-                const char* response =
+           /*     const char* response =
                     "HTTP/1.1 200 OK\r\n"
                     "Content-Length: 11\r\n"
                     "Content-Type: text/plain\r\n"
                     "\r\n"
-                    "Hello World";
+                    "Hello World";*/
 
-                size_t response_len = strlen(response);
+                size_t response_len = strlen(response.c_str());
+          //      size_t response_len = strlen(file.c_str());
                 size_t bytes_sent = 0;
                 while (bytes_sent < response_len) 
                 {
-                    int n = send(conn->fd, response + bytes_sent, response_len - bytes_sent, 0);
+                    int n = send(conn->fd, (response.c_str()) + bytes_sent, response_len - bytes_sent, 0);
                     if (n > 0) 
                     {
                         bytes_sent += n;
@@ -287,30 +310,6 @@ void GlobalServer::startServer()
     close(epoll_fd);
 }
 
-/*int GlobalServer::stringToInt(const std::string& str) 
-{
-    long lvalue;
-    char* endptr;
-    errno = 0;
-
-    if (str == "")
-        throw GlobalServer::InvalidStrToIntException();
-
-    lvalue = std::strtol(str.c_str(), &endptr, 10);
-
-    if (*endptr != '\0' || errno == ERANGE)
-        throw GlobalServer::InvalidStrToIntException();
-
-    if (lvalue >= std::numeric_limits<int>::min() && lvalue <= std::numeric_limits<int>::max())
-        return (static_cast<int>(lvalue));
-    else
-        throw GlobalServer::InvalidStrToIntException();
-}*/
-
-/*const char* GlobalServer::InvalidStrToIntException::what(void) const throw()
-{
-    return ("Invalid string to int exception!");
-}*/
 
 // Add a new client connection to epoll and store its context.
 void GlobalServer::addConnection(int client_fd) 
@@ -344,3 +343,165 @@ void GlobalServer::removeConnection(Connection* conn)
     connections.erase(conn->fd);
     delete conn;
 }
+
+//conn->buffer
+int GlobalServer::getMaxBodySize(std::string requestStr)
+{
+    std::string hostStr = parseHeaderField(requestStr, "Host:");
+    std::vector<std::string> hostVec = splitHost(hostStr);
+    //std::cout << "server_name: " << hostVec[0] << std::endl;
+    //std::cout << "listen: " << hostVec[1] << std::endl;
+    std::string server_name = hostVec[0];
+    int listenPort = std::atoi(hostVec[1].c_str());
+    
+
+    std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec();
+    ConfigServer configServer;
+
+std::cout << "1size: " << configServerVec.size() << std::endl;
+
+    std::vector<ConfigServer>::iterator it;
+    for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                
+    {                                                  
+        configServer = (*it);
+        if (configServer.getListenPort() != listenPort)
+        {
+            configServerVec.erase(it);                                       //remove not same listening port
+        }
+    }
+
+std::cout << "2size: " << configServerVec.size() << std::endl;
+
+    for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                
+    {                                                  
+        configServer = (*it);
+        if (isContainIn(configServer.getServerName(), server_name))
+        {
+            break;//configServerVec.erase(it);                                       
+        }
+    }
+
+std::cout << std::endl;
+std::cout << "getMaxBodySize server_name: " << configServer.getServerName() << std::endl;
+std::cout << "getMaxBodySize listen: " << configServer.getListenPort() << std::endl;
+std::cout << "getMaxBodySize max_body_size: " << configServer.getMaxBodySize() << std::endl;
+std::cout << std::endl;
+
+return (configServer.getMaxBodySize());
+
+
+}
+
+ConfigServer GlobalServer::parseConfigServer(std::string requestStr)
+{
+    std::string hostStr = parseHeaderField(requestStr, "Host:");
+    std::vector<std::string> hostVec = splitHost(hostStr);
+    std::string server_name = hostVec[0];
+    int listenPort = std::atoi(hostVec[1].c_str());
+    
+    std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec();
+    ConfigServer configServer;
+
+std::cout << "1size: " << configServerVec.size() << std::endl;
+
+    std::vector<ConfigServer>::iterator it;
+    for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                
+    {                                                  
+        configServer = (*it);
+        if (configServer.getListenPort() != listenPort)
+        {
+            configServerVec.erase(it);
+        }
+    }
+
+std::cout << "2size: " << configServerVec.size() << std::endl;
+
+    for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                
+    {                                                  
+        configServer = (*it);
+        if (isContainIn(configServer.getServerName(), server_name))
+        {
+            break;                           
+        }
+    }
+
+std::cout << std::endl;
+std::cout << "getMaxBodySize server_name: " << configServer.getServerName() << std::endl;
+std::cout << "getMaxBodySize listen: " << configServer.getListenPort() << std::endl;
+std::cout << "getMaxBodySize max_body_size: " << configServer.getMaxBodySize() << std::endl;
+std::cout << std::endl;
+
+return (configServer);
+}
+
+bool compareConfigLocationDescending(const ConfigLocation& a, const ConfigLocation& b) 
+{
+    return a.getRequestPath().length() > b.getRequestPath().length();
+}
+
+std::string GlobalServer::handleRequest(std::string requestStr)
+{
+    //match location
+    ConfigServer configServer = parseConfigServer(requestStr);
+    std::vector<ConfigLocation> configLocationVec = configServer.getConfigLocationVec();
+
+    // Sort the vector in descending order using the comparator function.
+    std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);
+
+    Request req = RequestParser::parseRequest(requestStr);
+    std::cout << "Method: " << req.method << std::endl;
+    std::cout << "URL: " << req.url << std::endl;
+
+    ConfigLocation configLocation;
+    std::vector<ConfigLocation>::iterator it;
+    for (it = configLocationVec.begin(); it < configLocationVec.end(); it++)
+    {
+        //std::cout << "request_path: " << (*it).getRequestPath() << std::endl;
+        configLocation = (*it);
+        std::string requestPath = configLocation.getRequestPath();
+
+        if (req.url.rfind(requestPath, 0) == 0) // pos=0 limits the search to the prefix
+        { 
+            break;
+        }
+    }
+
+    std::cout << std::endl;
+    std::cout << "handleRequest request_path: " << configLocation.getRequestPath() << std::endl;
+    std::cout << "handleRequest root: " << configLocation.getRoot() << std::endl;
+    //std::cout << "getMaxBodySize max_body_size: " << configServer.getMaxBodySize() << std::endl;
+    std::cout << std::endl;
+
+    std::string requestPath = configLocation.getRequestPath();
+    std::string root = configLocation.getRoot();
+    std::string index = configLocation.getIndex();
+    std::string autoindex = configLocation.getAutoIndex();
+    std::string methods = configLocation.getMethods();
+    std::string redirect = configLocation.getRedirect();
+
+    std::string filePath = replacePath(req.url, requestPath, root);
+
+std::cout << "filePath: " << filePath << std::endl;
+
+std::string output;
+
+    if (req.method == "GET" && isContainIn(methods, "GET"))
+    {
+        //read file
+        std::string file = readServerFile(filePath);
+
+        Response res = Response::ResBuilder()
+									.sc(SC200)
+									->ct(MIME::KEY + MIME::HTML)
+									->mc("Connection: close")
+									->cl(file.size())
+									->build();
+	    output = res.toString();
+
+        output = output + file + '\0';
+
+    }
+    return (output);
+}
+
+

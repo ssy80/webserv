@@ -21,7 +21,6 @@ std::string trim(const std::string& str)
     return str.substr(start, end - start + 1);
 }
 
-
 void printMap(std::map<std::string, std::string> anyMap)
 {
     std::map<std::string, std::string>::iterator it;
@@ -55,7 +54,6 @@ std::string removeBlock(std::string configStr, std::string startMarker, std::str
     }
     return (configStr);
 }
-
 
 std::map<std::string, std::string> extractKeyValuePair(std::string configStr)
 {
@@ -162,36 +160,214 @@ std::string extractBlock(std::string configStr, std::string startMarker, std::st
 }
 
 
-
-
 int parseContentLength(const std::string& request)
 {
     std::string header = "Content-Length:";
     size_t pos = request.find(header);
-    if (pos == std::string::npos) {
-        return -1;  // Header not found.
+    if (pos == std::string::npos)                                                   // Header not found.
+    {
+        return -1;                                                  
     }
     
-    // Move position past "Content-Length:".
-    pos += header.size();
+    pos += header.size();                                                           // Move position past "Content-Length:".
     
-    // Skip any whitespace after the header.
-    while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t')) {
+    
+    while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))  // Skip any whitespace after the header.
+    {
         pos++;
     }
     
-    // Find the end of the line (CRLF).
-    size_t end = request.find("\r\n", pos);
-    if (end == std::string::npos) {
+    size_t end = request.find("\r\n", pos);                                         // Find the end of the line (CRLF).
+    if (end == std::string::npos) 
+    {
         end = request.size();
     }
     
-    // Extract the substring containing the numeric value.
-    std::string valueStr = request.substr(pos, end - pos);
-    
-    // Convert the string to an integer.
-    int contentLength = std::atoi(valueStr.c_str());
-    //int contentLength = stringToInt(valueStr.c_str());
+    std::string valueStr = request.substr(pos, end - pos);                  // Extract the substring containing the numeric value.
+    int contentLength = std::atoi(valueStr.c_str());                        // Convert the string to an integer.
     return contentLength;
 }
 
+std::string parseHeaderField(const std::string& request, std::string field)
+{
+    //std::string header = field; //"Content-Length:";
+    size_t pos = request.find(field);
+    if (pos == std::string::npos)                                                   // Header not found.
+    {
+        return "";                                                 
+    }
+    
+    pos += field.size();                                                           // Move position past "Content-Length:".
+    
+    
+    while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))  // Skip any whitespace after the header.
+    {
+        pos++;
+    }
+    
+    size_t end = request.find("\r\n", pos);                                         // Find the end of the line (CRLF).
+    if (end == std::string::npos) 
+    {
+        end = request.size();
+    }
+    
+    std::string valueStr = request.substr(pos, end - pos);                  // Extract the substring containing the numeric value.
+    //int contentLength = std::atoi(valueStr.c_str());                        // Convert the string to an integer.
+    //return contentLength;
+    return (valueStr);
+}
+
+const char* InvalidStrToIntException::what(void) const throw()
+{
+    return ("Invalid string to int exception!");
+}
+
+int stringToInt(const std::string& str) 
+{
+    long lvalue;
+    char* endptr;
+    errno = 0;
+
+    if (str == "")
+        throw InvalidStrToIntException();
+
+    lvalue = std::strtol(str.c_str(), &endptr, 10);
+
+    if (*endptr != '\0' || errno == ERANGE)
+        throw InvalidStrToIntException();
+
+    if (lvalue >= std::numeric_limits<int>::min() && lvalue <= std::numeric_limits<int>::max())
+        return (static_cast<int>(lvalue));
+    else
+        throw InvalidStrToIntException();
+}
+
+//valid port from 1024 - 65535
+bool isValidPort(std::string portStr)
+{
+    int port;
+    try 
+    {
+        port = stringToInt(portStr);
+    }
+    catch(const std::exception& e)
+    {
+        return (false);
+    }
+
+    if (port >= 1024 && port <= 65535)
+        return (true);
+    else
+        return (false);
+}
+
+// int must >= 0
+bool isValidInt(std::string valueStr)
+{
+    try 
+    {
+        if (stringToInt(valueStr) >= 0)
+            return (true);
+        else
+            return (false);
+    }
+    catch(const std::exception& e)
+    {
+        return (false);
+    }
+}
+
+
+std::string readFile(std::string configFile)
+{
+    std::string fileStr;
+    std::string line;
+    struct stat info;
+
+    if (stat(configFile.c_str(), &info) != 0) 
+    {
+        std::cerr << "Error: Cannot access config file" << std::endl;
+        exit(1);
+    }
+      
+    if (S_ISDIR(info.st_mode))                                              // Check if it's a directory
+    {
+        std::cerr << "Error: config file is a directory" << std::endl;
+        exit(1);
+    }
+    
+    std::ifstream in(configFile.c_str());
+    if (!in) 
+    {
+        std::cerr << "Error: Cannot open file!" << std::endl;
+        exit(1);
+    }
+
+    while (std::getline(in, line)) 
+    {
+        fileStr = fileStr + '\n' + line;
+    }
+    in.close();
+
+    return (fileStr);
+}
+
+/*split "Host: example.com:8080" by :*/
+std::vector<std::string> splitHost(std::string hostStr)
+{
+    std::vector<std::string> hostVec;
+    std::string::size_type start = 0;
+    std::string::size_type pos;
+    
+    pos = hostStr.find(':', start);
+    while (pos != std::string::npos) // Loop until no more ':' characters are found
+    {
+        hostVec.push_back(trim(hostStr.substr(start, pos - start)));
+        start = pos + 1;
+        pos = hostStr.find(':', start);
+    }
+    hostVec.push_back(trim(hostStr.substr(start)));                     // Add the final token after the last ':'
+    return (hostVec);
+}
+
+/*line = "hello.com localhost example.com" findStr="localhost"*/
+bool isContainIn(std::string line, std::string findStr)
+{
+    std::istringstream iss(line);
+    std::string token;
+
+    while (iss >> token)                        // Split by whitespace and check each token.
+    {
+        if (token == findStr) 
+        {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+
+// Check if the URL begins with the requestPath
+std::string replacePath(const std::string& url, const std::string& requestPath, const std::string& root) 
+{
+    if (url.compare(0, requestPath.size(), requestPath) == 0) 
+    {
+        
+        return root + "/" + url.substr(requestPath.size());          // Remove the requestPath portion from the URL and append the rest to the root.
+    }
+   
+    return url;                                               // If the URL doesn't start with requestPath, return it unchanged.
+}
+
+
+std::string readServerFile(const std::string& filePath) 
+{
+    std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
+    if (!file)                                                          // Handle error appropriately. Here we simply return an empty string.
+    {
+        return "";
+    }
+    std::ostringstream contents;
+    contents << file.rdbuf();
+    return (contents.str());
+}

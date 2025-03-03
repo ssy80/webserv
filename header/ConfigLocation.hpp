@@ -22,6 +22,14 @@ class ConfigLocation
 {
     private:
         std::map<std::string, std::string> keyValueMap;
+        std::string request_path;
+        std::string root;
+        std::string index;
+        std::string autoindex;   
+        std::string methods;
+        std::string redirect;
+        
+        bool validate();
         
     public:
         ConfigLocation();
@@ -32,7 +40,16 @@ class ConfigLocation
         std::map<std::string, std::string> getKeyValueMap();
 
         void parseConfigLocation(std::string configStr);
-        void setKeyValueMap(std::map<std::string, std::string> _keyValueMap);
+        //void setKeyValueMap(std::map<std::string, std::string> _keyValueMap);
+
+
+        const std::string& getRequestPath() const;
+        std::string getRoot();
+        std::string getIndex();
+        std::string getAutoIndex();
+        std::string getMethods();
+        std::string getRedirect();
+        
 
     
 };

@@ -10,21 +10,24 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
-#ifndef __UTILCONFIG_HPP
-#define __UTILCONFIG_HPP
 
-#include <iostream>
-#include <cerrno>
-#include <map>
-#include <vector>
-#include <sstream>
-#include <cstdlib>
+#ifndef UTILCONFIG_HPP
+# define UTILCONFIG_HPP
+
+# include <iostream>
+# include <cerrno>
+# include <map>
+# include <vector>
+# include <sstream>
+# include <cstdlib>
+# include <limits>
+# include <fstream>
+# include <sys/stat.h>
 
 
 std::string trim(const std::string& str);
 
-//int stringToInt(const std::string& str);
+int stringToInt(const std::string& str);
 
 void printMap(std::map<std::string, std::string> anyMap);
 
@@ -39,5 +42,31 @@ std::vector<std::string> extractBetweenBlockVec(std::string configStr, std::stri
 std::string extractBlock(std::string configStr, std::string startMarker, std::string endMarker);
 
 int parseContentLength(const std::string& request);
+
+std::string parseHeaderField(const std::string& request, std::string field);
+
+bool isValidInt(std::string valueStr);
+
+bool isValidPort(std::string portStr);
+
+std::string readFile(std::string configFile);
+
+std::vector<std::string> splitHost(std::string hostStr);
+
+bool isContainIn(std::string line, std::string findStr);
+
+std::string replacePath(const std::string& url, const std::string& requestPath, const std::string& root);
+
+
+std::string readServerFile(const std::string& filePath);
+
+
+
+class InvalidStrToIntException: public std::exception
+{
+    public:
+        const char* what(void) const throw();
+};
+
 
 #endif

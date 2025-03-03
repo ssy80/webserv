@@ -27,6 +27,13 @@
 # include <cstring>
 # include "AServer.hpp"
 
+# include "Request.hpp"
+# include "RequestParser.hpp"
+# include "Response.hpp"
+# include "MIME.hpp"
+
+# include <algorithm>
+
 
 # define READ_BUFFER 1024
 
@@ -57,6 +64,13 @@ class GlobalServer : public AServer
         void removeConnection(Connection* conn);
         void addConnection(int client_fd) ;
 
+        int getMaxBodySize(std::string requestStr);
+        ConfigServer parseConfigServer(std::string requestStr);
+
+        std::string handleRequest(std::string requestStr);
+
+        //bool compareConfigLocationDescending(const ConfigLocation& a, const ConfigLocation& b);
+
     public:
         GlobalServer(WebServerConfig _webServerConfig);
         ~GlobalServer();
@@ -64,6 +78,10 @@ class GlobalServer : public AServer
         GlobalServer& operator=(const GlobalServer& other);
 
         void startServer();
+
+        
+
+
 
         
         /*class InvalidStrToIntException: public std::exception

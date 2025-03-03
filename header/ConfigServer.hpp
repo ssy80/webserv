@@ -21,6 +21,7 @@
 # include "utilConfig.hpp"
 # include <sstream>
 
+# define DEFAULT_CONFIG "./config/default.config"
 
 class ConfigServer
 {
@@ -28,6 +29,17 @@ class ConfigServer
         std::vector<ConfigLocation> configLocationVec;
         std::map<std::string, std::string> keyValueMap;
         //std::vector<std::string> getLocationStr(std::string configServerStr);
+
+        int listen;
+        std::string server_name;
+        int max_body_size;
+        std::map<std::string, std::string> errorPageMap;
+
+        std::map<std::string, std::string> defaultErrorPageMap;
+        
+        bool validate();
+        void populateDefaultErrorPageMap();
+        
 
     public:
         ConfigServer();
@@ -39,6 +51,14 @@ class ConfigServer
         std::vector<ConfigLocation>  getConfigLocationVec();
         
         void parseConfigServer(std::string configServerStr);
+
+        int getListenPort();
+        std::string getServerName();
+        int getMaxBodySize();
+        std::map<std::string, std::string> getErrorPageMap();
+        std::map<std::string, std::string> getDefaultErrorPageMap();
+        
+        
 
 };
 

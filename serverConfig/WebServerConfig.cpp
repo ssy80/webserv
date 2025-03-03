@@ -49,141 +49,7 @@ void WebServerConfig::parseWebServerConfigFile(std::string configFile)
         configServer.parseConfigServer(*it);                                      // parse each server string to ConfigServer obj 
         this->configServerVec.push_back(configServer);                            
     }
-
 }
-
-/*std::vector<std::string> WebServerConfig::getServerStr(std::string configFileStr)
-{
-    std::vector<std::string> configServerStrVec;
-
-    std::istringstream iss(configFileStr);
-    std::string line;
-    bool inServer = false;
-    std::vector<std::string> serverLines;
-    std::string serverStr;
-
-    while (std::getline(iss, line)) 
-    {
-        std::string trimmed = trim(line);
-        if (trimmed == "[server]") 
-        {
-            inServer = true;
-            continue; // Skip the marker line.
-        }
-        if (trimmed == "[/server]") 
-        {
-            inServer = false;
-            //break;    // Stop reading after the global block.
-            for (std::vector<std::string>::iterator it = serverLines.begin(); it != serverLines.end(); it++)
-            {
-                serverStr = serverStr + '\n' + (*it);
-            }
-            configServerStrVec.push_back(serverStr);
-            serverStr = "";
-            serverLines.clear();
-        }
-        if (inServer) 
-        {
-            serverLines.push_back(trimmed);
-        }
-    }
-
-    return (configServerStrVec);
-}*/
-
-
-
-
-
-/*std::map<std::string, std::string> WebServerConfig::parseGlobalStr(std::string globalStr)
-{
-    std::map<std::string, std::string> configGlobalMap;
-    std::istringstream iss(globalStr);
-    std::string line;
-    
-    while (std::getline(iss, line)) 
-    {
-        // Trim the line to remove extra whitespace.
-        std::string trimmedLine = trim(line);
-        if (trimmedLine.empty())
-            continue;  // Skip empty lines.
-        
-        // Find the '=' separator.
-        std::string::size_type pos = trimmedLine.find('=');
-        if (pos == std::string::npos)
-            continue;  // Skip lines that don't contain '='.
-        
-        // Extract key and value substrings, and trim them.
-        std::string key = trim(trimmedLine.substr(0, pos));
-        std::string value = trim(trimmedLine.substr(pos + 1));
-        
-        // Store the key-value pair in the map.
-        configGlobalMap[key] = value;
-    }
-    return configGlobalMap;
-}*/
-
-/*std::string WebServerConfig::getGlobalStr(std::string configStr)
-{
-    // Use an istringstream to read the configuration string line by line.
-    std::istringstream iss(configStr);
-    std::string line;
-    bool inGlobal = false;
-    std::vector<std::string> globalLines;
-    std::string globalStr;
-
-    while (std::getline(iss, line)) 
-    {
-        std::string trimmed = trim(line);
-        if (trimmed == "[global]") 
-        {
-            inGlobal = true;
-            continue; // Skip the marker line.
-        }
-        if (trimmed == "[/global]") 
-        {
-            inGlobal = false;
-            break;    // Stop reading after the global block.
-        }
-        if (inGlobal) 
-        {
-            globalLines.push_back(trimmed);
-        }
-    }
-
-    // Output the lines found within the [global] block.
-    //std::cout << "Lines in the [global] block:" << std::endl;
-    for (std::vector<std::string>::iterator it = globalLines.begin(); it != globalLines.end(); it++) 
-    {
-        //std::cout << *it << std::endl;
-        globalStr = globalStr + '\n' + (*it);
-    }
-
-    return (globalStr);
-
-}*/
-
-std::string WebServerConfig::readFile(std::string configFile)
-{
-    std::string fileStr;
-    std::string line;
-    
-    std::ifstream in(configFile.c_str());
-    if (!in) 
-    {
-        std::cerr << "Error: Cannot open config file!" << std::endl;
-        exit(1);
-    }
-
-    while (std::getline(in, line)) 
-    {
-        fileStr = fileStr + '\n' + line;
-    }
-    in.close();
-
-    return (fileStr);
-}
-
 
 ConfigGlobal WebServerConfig::getConfigGlobal()
 {
@@ -194,3 +60,21 @@ std::vector<ConfigServer> WebServerConfig::getConfigServerVec()
 {
     return (this->configServerVec);
 }
+
+std::vector<int> WebServerConfig::getUniquePortsVec()
+{
+    std::set<int> uniquePortsSet;
+
+    int port;
+    std::vector<ConfigServer>::iterator it;
+    for (it = this->configServerVec.begin(); it < this->configServerVec.end(); it++)
+    {
+        port = std::atoi(((*it).getKeyValueMap())["listen"].c_str());
+        uniquePortsSet.insert(port);
+    }
+
+    std::vector<int> uniquePortsVec(uniquePortsSet.begin(), uniquePortsSet.end());
+    return uniquePortsVec;
+}
+
+
