@@ -120,7 +120,7 @@ string filetype(const string& url){
 	return map[ext];
 }
 
-string getHandler(Request req, ConfigLocation config) {
+string getHandler(const Request& req, ConfigLocation& config) {
 	bool idx = (config.getAutoIndex() == "on");
 
 	ifstream f((config.getRoot() + req.url).c_str());
@@ -201,7 +201,7 @@ string getHandler(Request req, ConfigLocation config) {
 	return res;
 }
 
-string postHandler(Request req, ConfigLocation config) {
+string postHandler(const Request& req, ConfigLocation& config) {
 	std::ifstream src(req.url.c_str(), ios::binary);
 	
 	if (!src.good()) {
@@ -235,7 +235,7 @@ string postHandler(Request req, ConfigLocation config) {
 	return res;
 }
 
-string deleteHandler(Request req, ConfigLocation config) {
+string deleteHandler(const Request& req, ConfigLocation& config) {
 	string dir = config.getRoot() + "./cache" + req.url;
 	ifstream f(dir.c_str());
 

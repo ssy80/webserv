@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Static HTML Page</title>
+    <title>webserv</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,24 +27,33 @@
 						display: block;
 						margin-left: auto;
 						margin-right: auto;
-						width: 50%;
+                        width: 25%;
+                        height: 25%;
 				}
     </style>
 </head>
 <body>
     <header>
-        <h1>Welcome to My Simple Page</h1>
+        <h1>Welcome to Webserv</h1>
     </header>
     <main>
-        <h2>About This Page</h2>
-        <p>This is a simple static HTML page example. It includes a header, a main content area, and a footer.</p>
-        <p>Feel free to modify the content and styles to suit your needs!</p>
-				<img src="/images/rainbow.png" alt="rainbow" class="center" />
-        <iframe src="/cgi-bin/time.py" width="600" height="400"></iframe>
-        <iframe src="/cgi-bin/image.py" width="600" height="400"></iframe>
+        <div id="server-time">Loading time...</div>
+        <script>
+            async function loadTime() {
+                const response = await fetch('/cgi-bin/time.py');
+                if (!response.ok) throw new Error("Failed to load");
+                const text = await response.text();
+                document.getElementById('server-time').innerHTML = text;
+            }
+            loadTime();
+        </script>
+
+        <img src="/images/rainbow.png" alt="rainbow" class="center" />
+        <img src="/cgi-bin/image.py" alt="image" class="center" />
+    
     </main>
     <footer>
-        <p>&copy; 2025 Simple HTML Examplesss</p>
+        <p>&copy; 2025 webserv project</p>
     </footer>
 </body>
 </html>
