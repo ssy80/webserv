@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "../header/GlobalServer.hpp"
+#include "../header/ResHelper.hpp"
 
 
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
@@ -482,15 +483,28 @@ std::string GlobalServer::handleRequest(std::string requestStr)
 
     std::string filePath = replacePath(req.url, requestPath, root);
 
-std::cout << "filePath: " << filePath << std::endl;
+    std::cout << "filePath: " << filePath << std::endl;
+
+    std::string output;
 
     if (req.method == "GET" && isContainIn(methods, "GET"))
-        return getHandler(req, configLocation);
-    else if (req.method == "POST" && isContainIn(methods, "POST"))
-        return postHandler(req, configLocation);
-    else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
-        return deleteHandler(req, configLocation);
-    // else return 406 errror
-}
+    {
+        //read file
+      cout << "add root :" << root+"/"+index+".html"<<endl;
+      std::string file = readServerFile(req.url == "/" ? root+"/"+index : root+req.url);
+
+      Response res = Response::ResBuilder()
+                .sc(SC200)
+                ->ct(MIME::KEY + filetype(req.url == "/" ? root+"/"+index : root+req.url))
+                ->mc("Connection", "close")
+                ->cl(file.size())
+                ->build();
+      output = res.toString();
+
+      output = output + file + '\0';
+      cout << output << endl;
+    }
+    return (output);
+  }
 
 
