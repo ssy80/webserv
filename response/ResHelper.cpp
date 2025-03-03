@@ -17,6 +17,22 @@ vector<unsigned char> readFile(const string& resource){
 	return output;	
 }
 
+vector<unsigned char> readCGI(const string& scriptPath) {
+	vector<unsigned char> output;
+	output.reserve(2048);
+
+    FILE* pipe = popen(scriptPath.c_str(), "r"); // Execute CGI script
+    if (!pipe)
+		return output;
+
+    char buffer[128];
+	size_t bytesRead;
+	while ((bytesRead = fread(buffer, 1, sizeof(buffer), pipe)) > 0)
+		output.insert(output.end(), buffer, buffer + bytesRead);
+    pclose(pipe);
+    return output;
+}
+
 void sendRes(int client_socket, const string& output){
 	int bytes_sent = send(client_socket, output.c_str(), output.size(), 0);
 	if (bytes_sent < 0) {
@@ -112,6 +128,7 @@ string filetype(const string& url){
 	return map[ext];
 }
 
+
 void getHandler(int client_socket, Request req){
 	if (req.method != "GET")
 		return;
@@ -141,6 +158,23 @@ void getHandler(int client_socket, Request req){
 		output[output.size()-1] = '\0';
 		return sendRes(client_socket, output);
 	}
+	
+	// getting cgi files
+	if (req.url == "/cgi-bin/time.py" || req.url == "/cgi-bin/image.py") {
+		vector<unsigned char> file = readCGI("./www" + req.url);
+		Response res = Response::ResBuilder()
+		.sc(SC200)
+		->ct(MIME::KEY + MIME::HTML)
+		->mc("Connection: close")
+		->cl(file.size())
+		->build();
+		string output = res.toString();
+		for (int i = 0, n=file.size(); i<n;i++)
+		output += file[i];
+		output[output.size()-1] = '\0';
+		return sendRes(client_socket, output);
+	}
+
 	// other path
 	vector<unsigned char> file = readFile(dir);
 	Response res = Response::ResBuilder()

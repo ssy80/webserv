@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 10:39:47 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/01 20:13:41 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/03 11:32:07 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,8 @@ int main(int argc, char**argv)
             }
         }
 
-				// AServer *globalServer = new GlobalServer(webServerConfig);
-				AServer *globalServer = new YSServer();
+				//AServer *globalServer = new GlobalServer(webServerConfig);
+				 AServer *globalServer = new YSServer();
 				// AServer *globalServer = new ReqServer();
         globalServer->startServer();
 				delete globalServer;

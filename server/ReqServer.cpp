@@ -51,6 +51,8 @@ std::string handle_request(Request& req) {
 		return readFile("./www/index.html");
 	else if (path == "/cgi-bin/time.py")
 		return executeCGI("./www/cgi-bin/time.py");
+	else if (path == "/cgi-bin/image.py")
+		return executeCGI("./www/cgi-bin/image.py");
 	return "";
 }
 
