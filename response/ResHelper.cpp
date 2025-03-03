@@ -149,7 +149,7 @@ void getHandler(int client_socket, Request req, string dir){
 		Response res = Response::ResBuilder()
 			.sc(SC200)
 			->ct(MIME::KEY + MIME::HTML)
-			->mc("Connection: close")
+			->mc("Connection", "close")
 			->cl(file.size())
 			->build();
 		string output = res.toString();
@@ -173,7 +173,7 @@ void getHandler(int client_socket, Request req, string dir){
 		string headers = Response::ResBuilder()
 			.sc(SC200)
 			->ct(contentType)
-			->mc("Connection: close")
+			->mc("Connection", "close")
 			->cl(file.size())
 			->build()
 			.toString();
