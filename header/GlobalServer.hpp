@@ -30,6 +30,7 @@
 # include "Request.hpp"
 # include "RequestParser.hpp"
 # include "Response.hpp"
+# include "ResHelper.hpp"
 # include "MIME.hpp"
 
 # include <algorithm>

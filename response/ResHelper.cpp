@@ -1,6 +1,6 @@
 #include "../header/ResHelper.hpp"
 
-vector<unsigned char> readFile(const string& resource){
+vector<unsigned char> readRequestFile(const string& resource){
 	ifstream file;
 	vector<unsigned char> output;
 	output.reserve(2048);
@@ -17,7 +17,7 @@ vector<unsigned char> readFile(const string& resource){
 	return output;	
 }
 
-vector<unsigned char> readCGI(const string& scriptPath) {
+vector<unsigned char> readRequestCGI(const string& scriptPath) {
 	vector<unsigned char> output;
 	output.reserve(2048);
 
@@ -31,14 +31,6 @@ vector<unsigned char> readCGI(const string& scriptPath) {
 		output.insert(output.end(), buffer, buffer + bytesRead);
     pclose(pipe);
     return output;
-}
-
-void sendRes(int client_socket, const string& output){
-	int bytes_sent = send(client_socket, output.c_str(), output.size(), 0);
-	if (bytes_sent < 0) {
-			std::cerr << "Error sending response" << endl;
-			return;
-	}
 }
 
 string getFileExtension(const string& filename) {
@@ -128,52 +120,53 @@ string filetype(const string& url){
 	return map[ext];
 }
 
+string getHandler(Request req, ConfigLocation config) {
+	bool idx = (config.getAutoIndex() == "on");
 
-void getHandler(int client_socket, Request req, const string& root, bool idx){
-	if (req.method != "GET")
-		return;
-	string dir = root + req.url;
-	ifstream f(dir.c_str());
+	ifstream f(req.url.c_str());
+
 	// cannot find file, return 404
 	if (!f.good()){
-		Response res = Response::ResBuilder()
+		string res = Response::ResBuilder()
 			.sc(SC404)
 			->mc("Connection", "close")
-			->build();
-		return sendRes(client_socket, res.toString());
+			->build()
+			.toString();
+		return res;
 	}
+
 	// if autoindex is true
-	if (idx && req.url[req.url.size()-1] == '/'){
-		string tmp  = listdir(dir);
-		Response resdir = Response::ResBuilder()
+	if (idx && req.url[req.url.size() - 1] == '/') {
+		string tmp  = listdir(config.getRoot());
+		string res = Response::ResBuilder()
 							.sc(SC200)
 							->ct(MIME::KEY + MIME::HTML)
 							->cl(tmp.size())
 							->mc("Connection", "close")
-							->build();
-		tmp = resdir.toString() + tmp;
-		return sendRes(client_socket, tmp);
+							->build()
+							.toString();
+		return (res + tmp);
 	}
 
 	// getting index page
-	if (req.url == "/"){
-		vector<unsigned char> file = readFile("./www/index.html");
-		Response res = Response::ResBuilder()
+	if (req.url == "/") {
+		vector<unsigned char> file = readRequestFile(config.getRoot() + config.getIndex());
+		
+		string res = Response::ResBuilder()
 			.sc(SC200)
 			->ct(MIME::KEY + MIME::HTML)
 			->mc("Connection", "close")
 			->cl(file.size())
-			->build();
-		string output = res.toString();
-		for (int i = 0, n=file.size(); i<n;i++)
-		output += file[i];
-		output[output.size()-1] = '\0';
-		return sendRes(client_socket, output);
+			->build()
+			.toString();
+
+		res.insert(res.end(), file.begin(), file.end());
+		return res;
 	}
 	
 	// getting cgi files
 	if (req.url == "/cgi-bin/time.py" || req.url == "/cgi-bin/image.py") {
-		vector<unsigned char> file = readCGI("./www" + req.url);
+		vector<unsigned char> file = readRequestCGI(config.getRoot() + req.url);
 		
 		string contentType;
 		if (req.url == "/cgi-bin/image.py") {
@@ -182,7 +175,7 @@ void getHandler(int client_socket, Request req, const string& root, bool idx){
         	contentType = "Content-Type: text/html";
 		}
 		
-		string headers = Response::ResBuilder()
+		string res = Response::ResBuilder()
 			.sc(SC200)
 			->ct(contentType)
 			->mc("Connection", "close")
@@ -190,102 +183,99 @@ void getHandler(int client_socket, Request req, const string& root, bool idx){
 			->build()
 			.toString();
 
-		// convert headers to binary format
-		vector<unsigned char> response(headers.begin(), headers.end());
-
-		// append binary CGI output
-		response.insert(response.end(), file.begin(), file.end());
-
-		send(client_socket, response.data(), response.size(), 0);
+		res.insert(res.end(), file.begin(), file.end());
+		return res;
 	}
+
 	// other path
-	vector<unsigned char> file = readFile(dir);
-	Response res = Response::ResBuilder()
+	vector<unsigned char> file = readRequestFile(config.getRoot());
+	string res = Response::ResBuilder()
 		.sc(SC200)
-		->ct(MIME::KEY + filetype(dir))
+		->ct(MIME::KEY + filetype(config.getRoot()))
 		->mc("Connection", "close")
 		->cl(file.size())
-		->build();
-	string output = res.toString();
-	for (int i = 0, n=file.size(); i<n;i++)
-		output += file[i];
-	output[output.size()-1] = '\0';
-	sendRes(client_socket, output);
+		->build()
+		.toString();
+	
+	res.insert(res.end(), file.begin(), file.end());
+	return res;
 }
 
-void postHandler(int client_socket, Request req) {
-	if (req.method != "POST")
-		return;
+string postHandler(Request req, ConfigLocation config) {
 	std::ifstream src(req.url.c_str(), ios::binary);
+	
 	if (!src.good()) {
-		Response res = Response::ResBuilder()
+		string res = Response::ResBuilder()
 			.sc(SC404)
 			->mc("Connection", "close")
-			->build();
-		return sendRes(client_socket, res.toString());
+			->build()
+			.toString();
+		return res;
 	}
 
-	string dir = "./cache" + req.url;
+	string dir = config.getRoot() + "./cache" + req.url;
 	std::ofstream dst(dir.c_str(), ios::binary);
 	if (!dst.good()) {
-		Response res = Response::ResBuilder()
+		string res = Response::ResBuilder()
 			.sc(SC500)
 			->mc("Connection", "close")
-			->build();
-		return sendRes(client_socket, res.toString());
+			->build()
+			.toString();
+		return res;
 	}
 
 	dst << src.rdbuf();
 	
 	// file saved, return 201
-	Response res = Response::ResBuilder()
+	string res = Response::ResBuilder()
 		.sc(SC201)
 		->mc("Connection", "close")
-		->build();
-	return sendRes(client_socket, res.toString());
+		->build()
+		.toString();
+	return res;
 }
 
-void deleteHandler(int client_socket, Request req) {
-	if (req.method != "DELETE")
-		return;
-	string dir = "./cache" + req.url;
+string deleteHandler(Request req, ConfigLocation config) {
+	string dir = config.getRoot() + "./cache" + req.url;
 	ifstream f(dir.c_str());
 
 	// cannot find file, return 404
 	if (!f.good()) {
-		Response res = Response::ResBuilder()
+		string res = Response::ResBuilder()
 			.sc(SC404)
 			->mc("Connection", "close")
-			->build();
-		return sendRes(client_socket, res.toString());
+			->build()
+			.toString();
+		return res;
 	}
 
 	int status = remove(dir.c_str());
-	if (status!= 0) {
+	if (status != 0) {
 		// file cannot be deleted, return 500
-		Response res = Response::ResBuilder()
+		string res = Response::ResBuilder()
 			.sc(SC500)
 			->mc("Connection", "close")
-			->build();
-		return sendRes(client_socket, res.toString());
+			->build()
+			.toString();
+		return res;
 	}
 
 	// file deleted, return 200
-	Response res = Response::ResBuilder()
+	string res = Response::ResBuilder()
 		.sc(SC200)
 		->mc("Connection", "close")
-		->build();
-	return sendRes(client_socket, res.toString());
+		->build()
+		.toString();
+	return res;
 }
 
-void otherHandler(int client_socket, Request req){
-	if (req.method == "GET" || req.method == "POST" || req.method == "DELETE")
-		return;
-	Response res = Response::ResBuilder()
+string otherHandler(){
+	string res = Response::ResBuilder()
 		.sc(SC406)
 		->mc("Connection", "close")
-		->build();
-	sendRes(client_socket, res.toString());
+		->build()
+		.toString();
+	return res;
 }
 
 

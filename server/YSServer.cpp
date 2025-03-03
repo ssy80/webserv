@@ -7,6 +7,8 @@ YSServer::~YSServer()
 {}
 
 static void handle_client(int client_socket, string dir) {
+	if (dir.empty())
+		return;
 	char buffer[1024];
 	
 	// Read the request from the client (Telnet)
@@ -20,13 +22,13 @@ static void handle_client(int client_socket, string dir) {
 	// int l = req.url.length();
 	// string dir = "./www";
 	// handle get request
-	getHandler(client_socket, req, dir, true);
+	//getHandler(client_socket, req, dir, true);
 
-	postHandler(client_socket, req);
-	deleteHandler(client_socket, req);
+	//postHandler(client_socket, req);
+	//deleteHandler(client_socket, req);
 
 	// handle other methods that are not required.
-	otherHandler(client_socket, req);
+	//otherHandler(client_socket, req);
 	// Close the client connection
 	close(client_socket);
 }
