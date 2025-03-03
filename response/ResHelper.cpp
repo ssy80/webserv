@@ -129,11 +129,10 @@ string filetype(const string& url){
 }
 
 
-void getHandler(int client_socket, Request req, string dir){
+void getHandler(int client_socket, Request req, const string& root, bool idx){
 	if (req.method != "GET")
 		return;
-	// string dir = "./www";
-	dir += req.url;
+	string dir = root + req.url;
 	ifstream f(dir.c_str());
 	// cannot find file, return 404
 	if (!f.good()){
@@ -143,8 +142,21 @@ void getHandler(int client_socket, Request req, string dir){
 			->build();
 		return sendRes(client_socket, res.toString());
 	}
+	// if autoindex is true
+	if (idx && req.url[req.url.size()-1] == '/'){
+		string tmp  = listdir(dir);
+		Response resdir = Response::ResBuilder()
+							.sc(SC200)
+							->ct(MIME::KEY + MIME::HTML)
+							->cl(tmp.size())
+							->mc("Connection", "close")
+							->build();
+		tmp = resdir.toString() + tmp;
+		return sendRes(client_socket, tmp);
+	}
+
 	// getting index page
-	if (req.url == "/" || req.url == "/index.html"){
+	if (req.url == "/"){
 		vector<unsigned char> file = readFile("./www/index.html");
 		Response res = Response::ResBuilder()
 			.sc(SC200)
@@ -186,7 +198,6 @@ void getHandler(int client_socket, Request req, string dir){
 
 		send(client_socket, response.data(), response.size(), 0);
 	}
-
 	// other path
 	vector<unsigned char> file = readFile(dir);
 	Response res = Response::ResBuilder()
@@ -277,3 +288,32 @@ void otherHandler(int client_socket, Request req){
 	sendRes(client_socket, res.toString());
 }
 
+
+string listdir(const string& path){
+	DIR* dir = opendir(path.c_str());
+    string res = "";
+	if (dir == NULL) {
+        // cout << "Invalid directory or error accessing directory." << endl;
+		res += "Invalid directory or error accessing directory.";
+        return res;
+    }
+	struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL) {
+        string fileStr(entry->d_name);
+        if (fileStr == "." || fileStr == ".."){
+            // cout << entry->d_name << endl;
+			continue;
+		}
+		string tmp(entry->d_name);
+		if (entry->d_type == DT_REG){
+			res += "<a href=\"" + tmp + "\">" +  tmp + "</a> <br/>";
+			// cout << "this is file : " <<  entry->d_name << endl;
+		}
+		else if (entry->d_type == DT_DIR){
+			res += "<a href=\"" + tmp + "/\">" +  tmp + "/</a> <br/>";
+			// cout << "this is folder : " <<  entry->d_name << endl;
+		}
+    }
+    closedir(dir);
+	return res;
+}

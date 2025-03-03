@@ -20,7 +20,7 @@ static void handle_client(int client_socket, string dir) {
 	// int l = req.url.length();
 	// string dir = "./www";
 	// handle get request
-	getHandler(client_socket, req, dir);
+	getHandler(client_socket, req, dir, true);
 
 	postHandler(client_socket, req);
 	deleteHandler(client_socket, req);
