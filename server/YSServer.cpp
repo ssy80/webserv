@@ -51,7 +51,7 @@ static void handle_client(int client_socket, string dir) {
 		std::cout << "entering other handler" << std::endl;
 		resp = otherHandler();
 	}
-
+  resp[resp.size()-1] = '\0';
 	sendRes(client_socket, resp);
 	close(client_socket);
 }
