@@ -228,7 +228,7 @@ string postHandler(const Request& req, ConfigLocation& config) {
 		}
 
 		string res = Response::ResBuilder()
-			.sc(SC200)
+			.sc(SC201)
 			->mc("Connection", "close")
 			->cl(file.size())
 			->build()
@@ -237,29 +237,27 @@ string postHandler(const Request& req, ConfigLocation& config) {
 		res.insert(res.end(), file.begin(), file.end());
 		return res;
 	}
-	return "";
-	// DELETE BELOW
-
-	// string dir = config.getRoot() + "./cache" + req.url;
-	// std::ofstream dst(dir.c_str(), ios::binary);
-	// if (!dst.good()) {
-	// 	string res = Response::ResBuilder()
-	// 		.sc(SC500)
-	// 		->mc("Connection", "close")
-	// 		->build()
-	// 		.toString();
-	// 	return res;
-	// }
-
-	// dst << src.rdbuf();
 	
-	// // file saved, return 201
-	// string res = Response::ResBuilder()
-	// 	.sc(SC201)
-	// 	->mc("Connection", "close")
-	// 	->build()
-	// 	.toString();
-	// return res;
+	// other path
+	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
+	if (file.empty()) {
+		return Response::ResBuilder()
+		.sc(SC404)
+		->mc("Connection", "close")
+		->build()
+		.toString();
+	}
+
+	string res = Response::ResBuilder()
+		.sc(SC201)
+		->ct(MIME::KEY + filetype(config.getRoot()))
+		->mc("Connection", "close")
+		->cl(file.size())
+		->build()
+		.toString();
+	
+	res.insert(res.end(), file.begin(), file.end());
+	return res;
 }
 
 string deleteHandler(const Request& req, ConfigLocation& config) {

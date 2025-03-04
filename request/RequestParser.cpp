@@ -92,10 +92,15 @@ void RequestParser::processFormPart(const string& part, Request& request) {
 }
 
 string RequestParser::extractFilename(const std::string& contentDisposition) {
-	size_t filenamePos = contentDisposition.find("filename=");
+	std::cout << "starting extract" << std::endl;
+	string searchStr = "filename=";
+	size_t filenamePos = contentDisposition.find(searchStr);
+	std::cout << filenamePos << std::endl;
 	if (filenamePos != string::npos) {
-		size_t startPos = contentDisposition.find("\"", filenamePos + 9) + 1;
+		size_t startPos = contentDisposition.find("\"", filenamePos) + 1;
+		std::cout << "startPos" << startPos << std::endl;
 		size_t endPos = contentDisposition.find("\"", startPos);
+		std::cout << "endPos" << endPos << std::endl;
 		return contentDisposition.substr(startPos, endPos - startPos);
 	}
 	return "";
