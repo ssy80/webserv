@@ -18,7 +18,7 @@ static void sendRes(int client_socket, const string& output){
 static void handle_client(int client_socket, string dir) {
 	if (dir.empty())
 		return;
-	char buffer[1024];
+	char buffer[500000];
 	
 	// Read the request from the client (Telnet)
 	int bytes_received = read(client_socket, buffer, sizeof(buffer) - 1);
@@ -27,7 +27,7 @@ static void handle_client(int client_socket, string dir) {
 			return;
 	}
 	buffer[bytes_received] = '\0';  // Null-terminate the buffer to make it a valid string
-	
+
 
     Request req = RequestParser::parseRequest(buffer);
     std::cout << "Method: " << req.method << std::endl;
@@ -38,7 +38,7 @@ static void handle_client(int client_socket, string dir) {
 
 	std::string resp;
 
-    if (req.method == "GET") {
+  if (req.method == "GET") {
 		std::cout << "entering get handler" << std::endl;      
 		resp = getHandler(req, configLocation);
 	} else if (req.method == "POST") {
