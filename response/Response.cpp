@@ -7,6 +7,9 @@ contentLength(0),
 misc("")
 {};
 
+Response::ResBuilder::~ResBuilder()
+{};
+
 Response::ResBuilder* Response::ResBuilder::sc(const string& code){
 	this->statusCode = code;
 	return this;
@@ -37,6 +40,9 @@ contentType(builder.contentType),
 contentLength(builder.contentLength),
 misc(builder.misc)
 {}
+
+Response::~Response()
+{};
 
 string Response::toString(){
 	stringstream ss;
