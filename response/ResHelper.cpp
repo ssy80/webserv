@@ -116,7 +116,7 @@ string filetype(const string& url){
 		map["avi"] = MIME::AVI;
 	}
 	if (map.find(ext) == map.end())
-		return "";
+		return MIME::TXT;
 	return map[ext];
 }
 
@@ -137,7 +137,7 @@ string getHandler(const Request& req, ConfigLocation& config) {
 
 	// if autoindex is true
 	if (idx && req.url[req.url.size() - 1] == '/') {
-		string tmp  = listdir(config.getRoot());
+		string tmp  = listdir(config.getRoot() + req.url);
 		string res = Response::ResBuilder()
 							.sc(SC200)
 							->ct(MIME::KEY + MIME::HTML)
@@ -191,13 +191,13 @@ string getHandler(const Request& req, ConfigLocation& config) {
 	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
 	string res = Response::ResBuilder()
 		.sc(SC200)
-		->ct(MIME::KEY + filetype(config.getRoot()))
+		->ct(MIME::KEY + filetype(config.getRoot()+ req.url))
 		->mc("Connection", "close")
 		->cl(file.size())
 		->build()
 		.toString();
-	
-	res.insert(res.end(), file.begin(), file.end());
+
+    res.insert(res.end(), file.begin(), file.end());
 	return res;
 }
 
@@ -288,22 +288,22 @@ string listdir(const string& path){
         return res;
     }
 	struct dirent* entry;
-    while ((entry = readdir(dir)) != NULL) {
-        string fileStr(entry->d_name);
-        if (fileStr == "." || fileStr == ".."){
-            // cout << entry->d_name << endl;
-			continue;
-		}
-		string tmp(entry->d_name);
-		if (entry->d_type == DT_REG){
-			res += "<a href=\"" + tmp + "\">" +  tmp + "</a> <br/>";
-			// cout << "this is file : " <<  entry->d_name << endl;
-		}
-		else if (entry->d_type == DT_DIR){
-			res += "<a href=\"" + tmp + "/\">" +  tmp + "/</a> <br/>";
-			// cout << "this is folder : " <<  entry->d_name << endl;
-		}
+  while ((entry = readdir(dir)) != NULL) {
+    string fileStr(entry->d_name);
+    if (fileStr == "." || fileStr == ".."){
+        // cout << entry->d_name << endl;
+      continue;
     }
-    closedir(dir);
+    string tmp(entry->d_name);
+    if (entry->d_type == DT_REG){
+      res += "<a href=\"" + tmp + "\">" +  tmp + "</a> <br/>";
+      // cout << "this is file : " <<  entry->d_name << endl;
+    }
+    else if (entry->d_type == DT_DIR){
+      res += "<a href=\"" + tmp + "/\">" +  tmp + "/</a> <br/>";
+      // cout << "this is folder : " <<  entry->d_name << endl;
+    }
+  }
+  closedir(dir);
 	return res;
 }
