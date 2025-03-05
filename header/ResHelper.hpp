@@ -15,7 +15,7 @@ string getFileExtension(const string& filename);
 string filetype(const string& url);
 string getHandler(const Request& req, ConfigLocation& config);
 string postHandler(const Request& req, ConfigLocation& config);
-string deleteHandler(const Request& req, ConfigLocation& config);
+string deleteHandler(ConfigLocation& config);
 string otherHandler();
 string listdir(const string& path);
 

@@ -247,10 +247,8 @@ string postHandler(const Request& req, ConfigLocation& config) {
 		.toString();
 }
 
-
-
 // when delete handler is called, it will delete all files in the folder
-string deleteHandler(const Request& req, ConfigLocation& config) {
+string deleteHandler(ConfigLocation& config) {
 	string dir_path = config.getRoot() + "/tmp";
 
 	// check if directory exists
@@ -305,7 +303,6 @@ string otherHandler(){
 		.toString();
 	return res;
 }
-
 
 string listdir(const string& path){
 	DIR* dir = opendir(path.c_str());
