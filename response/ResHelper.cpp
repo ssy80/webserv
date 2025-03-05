@@ -288,7 +288,6 @@ string getHandler(Request& req, ConfigLocation& config) {
 		.sc(SC200)
 		->ct(MIME::KEY + filetype(config.getRoot()+ req.url))
 		->mc("Connection", "close")
-		->mc("Set-Cookie","session=login")
 		->cl(file.size())
 		->build()
 		.toString();
