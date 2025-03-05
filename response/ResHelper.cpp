@@ -1,4 +1,5 @@
 #include "../header/ResHelper.hpp"
+#include <unistd.h>
 
 vector<unsigned char> readRequestFile(const string& resource){
 	ifstream file;
@@ -219,13 +220,14 @@ string getHandler(const Request& req, ConfigLocation& config) {
 		->cl(file.size())
 		->build()
 		.toString();
-  
-  res.insert(res.end(), file.begin(), file.end());
+	
+	res.insert(res.end(), file.begin(), file.end());
 	return res;
 }
 
+// post handler is used to upload 1 file through the cgi script
 string postHandler(const Request& req, ConfigLocation& config) {
-  if (req.url.find("/cgi-bin") != std::string::npos) {
+	if (req.url.find("/cgi-bin") != std::string::npos) {
 		std::cout << "executing cgi" << std::endl;
 		vector<unsigned char> file = readRequestCGI(config.getRoot() + req.url);
 		std::cout << string(file.begin(), file.end()) << std::endl;
@@ -248,61 +250,59 @@ string postHandler(const Request& req, ConfigLocation& config) {
 		return res;
 	}
 
-	// other path
-	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
-	if (file.empty()) {
-		return Response::ResBuilder()
-		.sc(SC404)
+	return Response::ResBuilder()
+		.sc(SC403)
 		->mc("Connection", "close")
 		->build()
 		.toString();
-	}
-
-	// file saved, return 201
-	string res = Response::ResBuilder()
-		.sc(SC201)
-		->ct(MIME::KEY + filetype(config.getRoot()))
-		->mc("Connection", "close")
-		->cl(file.size())
-		->build()
-		.toString();
-	
-	res.insert(res.end(), file.begin(), file.end());
-	return res;
 }
 
-string deleteHandler(const Request& req, ConfigLocation& config) {
-	string dir = config.getRoot() + "./cache" + req.url;
-	ifstream f(dir.c_str());
+// when delete handler is called, it will delete all files in the folder
+string deleteHandler(ConfigLocation& config) {
+	string dir_path = config.getRoot() + "/tmp";
 
-	// cannot find file, return 404
-	if (!f.good()) {
-		string res = Response::ResBuilder()
-			.sc(SC404)
+	// check if directory exists
+	struct stat st;
+	if (stat(dir_path.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
+		return Response::ResBuilder()
+			.sc(SC200)
 			->mc("Connection", "close")
 			->build()
 			.toString();
-		return res;
 	}
 
-	int status = remove(dir.c_str());
-	if (status != 0) {
-		// file cannot be deleted, return 500
-		string res = Response::ResBuilder()
-			.sc(SC500)
+	// delete files in directory
+	DIR *dir = opendir(dir_path.c_str());
+	if (!dir) {
+		return Response::ResBuilder()
+			.sc(SC200)
 			->mc("Connection", "close")
 			->build()
 			.toString();
-		return res;
 	}
 
-	// file deleted, return 200
-	string res = Response::ResBuilder()
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL) {
+		string file_name = entry->d_name;
+
+		if (file_name == "." || file_name == "..") {
+			continue;
+		}
+
+		string full_path = dir_path + "/" + file_name;
+
+		struct stat st;
+		if (stat(full_path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+			// Delete file
+			unlink(full_path.c_str());
+		}
+	}
+	closedir(dir);
+	return Response::ResBuilder()
 		.sc(SC200)
 		->mc("Connection", "close")
 		->build()
 		.toString();
-	return res;
 }
 
 string otherHandler(){
@@ -313,7 +313,6 @@ string otherHandler(){
 		.toString();
 	return res;
 }
-
 
 string listdir(const string& path){
 	DIR* dir = opendir(path.c_str());
