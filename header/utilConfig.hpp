@@ -23,6 +23,7 @@
 # include <limits>
 # include <fstream>
 # include <sys/stat.h>
+# include <sys/time.h>
 
 
 std::string trim(const std::string& str);
@@ -60,7 +61,7 @@ std::string replacePath(const std::string& url, const std::string& requestPath, 
 
 std::string readServerFile(const std::string& filePath);
 
-
+long getCurrentTimeMs();
 
 class InvalidStrToIntException: public std::exception
 {

@@ -28,7 +28,6 @@ class ConfigServer
     private:
         std::vector<ConfigLocation> configLocationVec;
         std::map<std::string, std::string> keyValueMap;
-        //std::vector<std::string> getLocationStr(std::string configServerStr);
 
         int listen;
         std::string server_name;

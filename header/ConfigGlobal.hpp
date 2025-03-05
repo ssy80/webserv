@@ -24,6 +24,9 @@ class ConfigGlobal
     private:
         std::map<std::string, std::string> keyValueMap;
 
+        int timeout;
+        int max_events;
+
     public:
         ConfigGlobal();
         ~ConfigGlobal();
@@ -33,6 +36,9 @@ class ConfigGlobal
         std::map<std::string, std::string> getKeyValueMap();
         
         void parseConfigGlobal(std::string configGlobalStr);
+
+        int getTimeout();
+        int getMaxEvents();
 
 };
 

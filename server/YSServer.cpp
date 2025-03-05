@@ -18,7 +18,7 @@ static void sendRes(int client_socket, const string& output){
 static void handle_client(int client_socket, string dir) {
 	if (dir.empty())
 		return;
-	char buffer[1024];
+	char buffer[500000];
 	
 	// Read the request from the client (Telnet)
 	int bytes_received = read(client_socket, buffer, sizeof(buffer) - 1);

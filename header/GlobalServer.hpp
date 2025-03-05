@@ -45,8 +45,11 @@ class GlobalServer : public AServer
         // Structure to hold per-connection data.
         struct Connection 
         {
-            int fd;              // Client socket file descriptor.
-            std::string buffer;  // Buffer to accumulate received data.
+            int fd;                     // Client socket file descriptor.
+            std::string buffer;         // Buffer to accumulate received data.
+            long lastActive;  // Last activity time in ms.
+            std::string responseBuffer; // Stores the response to be sent.
+            size_t bytesSent;       // Tracks how many bytes have been sent.
         };
 
         // Global map to track connections by file descriptor.
@@ -54,6 +57,7 @@ class GlobalServer : public AServer
 
         // Global epoll file descriptor.
         int epoll_fd;
+        std::vector<int> listenFdsVec;          
 
         WebServerConfig webServerConfig;
 
@@ -68,9 +72,14 @@ class GlobalServer : public AServer
         int getMaxBodySize(std::string requestStr);
         ConfigServer parseConfigServer(std::string requestStr);
 
-        std::string handleRequest(std::string requestStr);
+        std::string handleRequest(std::string& requestStr);
 
         //bool compareConfigLocationDescending(const ConfigLocation& a, const ConfigLocation& b);
+
+        void createEpoll();
+        void startListeningPort(std::vector<int> uniquePortsVec);
+        void checkTimeoutConnections(ConfigGlobal& configGlobal);
+        std::string getErrorResponse(std::string& requestStr, std::string errorCode);
 
     public:
         GlobalServer(WebServerConfig _webServerConfig);

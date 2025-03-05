@@ -116,7 +116,7 @@ string filetype(const string& url){
 		map["avi"] = MIME::AVI;
 	}
 	if (map.find(ext) == map.end())
-		return "";
+		return MIME::TXT;
 	return map[ext];
 }
 
@@ -187,7 +187,7 @@ string getHandler(const Request& req, ConfigLocation& config) {
 			->cl(file.size())
 			->build()
 			.toString();
-		
+    
 		res.insert(res.end(), file.begin(), file.end());
 		return res;
 	}
@@ -204,18 +204,18 @@ string getHandler(const Request& req, ConfigLocation& config) {
 
 	string res = Response::ResBuilder()
 		.sc(SC200)
-		->ct(MIME::KEY + filetype(config.getRoot()))
+		->ct(MIME::KEY + filetype(config.getRoot()+ req.url))
 		->mc("Connection", "close")
 		->cl(file.size())
 		->build()
 		.toString();
-	
-	res.insert(res.end(), file.begin(), file.end());
+  
+  res.insert(res.end(), file.begin(), file.end());
 	return res;
 }
 
 string postHandler(const Request& req, ConfigLocation& config) {
-	if (req.url.find("/cgi-bin") != std::string::npos) {
+  if (req.url.find("/cgi-bin") != std::string::npos) {
 		std::cout << "executing cgi" << std::endl;
 		vector<unsigned char> file = readRequestCGI(config.getRoot() + req.url);
 		std::cout << string(file.begin(), file.end()) << std::endl;
@@ -237,7 +237,7 @@ string postHandler(const Request& req, ConfigLocation& config) {
 		res.insert(res.end(), file.begin(), file.end());
 		return res;
 	}
-	
+
 	// other path
 	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
 	if (file.empty()) {
@@ -248,6 +248,7 @@ string postHandler(const Request& req, ConfigLocation& config) {
 		.toString();
 	}
 
+	// file saved, return 201
 	string res = Response::ResBuilder()
 		.sc(SC201)
 		->ct(MIME::KEY + filetype(config.getRoot()))
@@ -313,22 +314,22 @@ string listdir(const string& path){
         return res;
     }
 	struct dirent* entry;
-    while ((entry = readdir(dir)) != NULL) {
-        string fileStr(entry->d_name);
-        if (fileStr == "." || fileStr == ".."){
-            // cout << entry->d_name << endl;
-			continue;
-		}
-		string tmp(entry->d_name);
-		if (entry->d_type == DT_REG){
-			res += "<a href=\"" + tmp + "\">" +  tmp + "</a> <br/>";
-			// cout << "this is file : " <<  entry->d_name << endl;
-		}
-		else if (entry->d_type == DT_DIR){
-			res += "<a href=\"" + tmp + "/\">" +  tmp + "/</a> <br/>";
-			// cout << "this is folder : " <<  entry->d_name << endl;
-		}
+  while ((entry = readdir(dir)) != NULL) {
+    string fileStr(entry->d_name);
+    if (fileStr == "." || fileStr == ".."){
+        // cout << entry->d_name << endl;
+      continue;
     }
-    closedir(dir);
+    string tmp(entry->d_name);
+    if (entry->d_type == DT_REG){
+      res += "<a href=\"" + tmp + "\">" +  tmp + "</a> <br/>";
+      // cout << "this is file : " <<  entry->d_name << endl;
+    }
+    else if (entry->d_type == DT_DIR){
+      res += "<a href=\"" + tmp + "/\">" +  tmp + "/</a> <br/>";
+      // cout << "this is folder : " <<  entry->d_name << endl;
+    }
+  }
+  closedir(dir);
 	return res;
 }

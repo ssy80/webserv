@@ -41,6 +41,11 @@ void WebServerConfig::parseWebServerConfigFile(std::string configFile)
     this->configGlobal.parseConfigGlobal(globalStr);                               //parse the globalStr to key/value in ConfigGlobal
 
     std::vector<std::string> configServerStrVec = extractBetweenBlockVec(configFileStr, "[server]", "[/server]");
+    if (configServerStrVec.size() == 0)
+    {
+        std::cerr << "Error: invalid config [server]" << std::endl;
+        exit(1);
+    }
 
     std::vector<std::string>::iterator it;
     for (it = configServerStrVec.begin(); it < configServerStrVec.end(); it++)    

@@ -86,11 +86,13 @@ class Response{
 				ResBuilder* ct(const string& type);
 				ResBuilder* cl(int len);
 				ResBuilder* mc(const string& key, const string& value);
-
-				Response build();
+        ~ResBuilder();
+				
+        Response build();
 		};
 
 		Response(ResBuilder builder);
+    ~Response();
 		string toString();
 };
 

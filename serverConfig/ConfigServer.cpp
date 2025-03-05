@@ -65,6 +65,12 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
     configServerStr = removeBlock(configServerStr, "[location]", "[/location]");
     this->keyValueMap = extractKeyValuePair(configServerStr);
 
+    if (this->keyValueMap.size() == 0)
+    {
+        std::cerr << "Error: invalid config [server]" << std::endl;
+        exit(1);
+    }
+
     //set attributes
     std::map<std::string, std::string>::iterator itServer;
     for (itServer = this->keyValueMap.begin(); itServer != this->keyValueMap.end(); itServer++)
@@ -113,7 +119,7 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
 
     if (!validate())
     {
-        std::cerr << "Error: invalid server config" << std::endl;
+        std::cerr << "Error: invalid config [server]" << std::endl;
         exit(1);
     }
 }
@@ -122,7 +128,16 @@ bool ConfigServer::validate()
 {
     if (this->listen == -1 || this->max_body_size == -1)
         return (false);
-    return (true);
+    //location must have / root location  
+    std::vector<ConfigLocation>::iterator it;
+    for (it = this->configLocationVec.begin(); it < this->configLocationVec.end(); it++)
+    {
+        if ((*it).getRequestPath() == "/")
+        {
+            return (true);
+        }
+    }
+    return (false);
 }
 
 
