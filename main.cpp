@@ -12,7 +12,6 @@
 
 #include "header/WebServerConfig.hpp"
 #include "header/GlobalServer.hpp"
-#include "header/ReqServer.hpp"
 #include "header/YSServer.hpp"
 
 

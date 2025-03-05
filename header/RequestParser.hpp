@@ -14,9 +14,8 @@ class RequestParser{
 	
 	private:
 		static void parseMultipartFormData(istringstream& stream, Request& request, const string& contentType);
-		static void processFormPart(const string& part, Request& request);
 		static string extractFilename(const string& contentDisposition);
-		static string extractFieldName(const string& contentDisposition);
+		static void parsePartFormData(istringstream& stream, Request& request, const string& endpt);
 };
 
 #endif
