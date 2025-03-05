@@ -9,12 +9,14 @@
 #include <sys/socket.h>
 #include <dirent.h>
 
+#define TIMEOUT 5000
+
 vector<unsigned char> readRequestFile(const string& resource);
 vector<unsigned char> readRequestCGI(const string& scriptPath);
 string getFileExtension(const string& filename);
 string filetype(const string& url);
-string getHandler(const Request& req, ConfigLocation& config);
-string postHandler(const Request& req, ConfigLocation& config);
+string getHandler(Request& req, ConfigLocation& config);
+string postHandler(Request& req, ConfigLocation& config);
 string deleteHandler(ConfigLocation& config);
 string otherHandler();
 string listdir(const string& path);

@@ -1,15 +1,19 @@
 #!/usr/bin/python3
 import cgi, sys, os
 
+filename_env = os.getenv("UPLOAD_FILENAME")
+
 form = cgi.FieldStorage()
 
-#if "filename" not in form or not form["filename"].filename:
-    #print("<h2>Error: No file uploaded</h2>")
-    #sys.exit(0)
+if "filename" not in form or not form["filename"].filename:
+    print("<h2>Error: No file uploaded</h2>")
+    sys.exit(0)
 
-fileitem = form["filename"]
-
+fileitem = form["filename"] 
 fn = os.path.basename(fileitem.filename)
+if filename_env:
+    fn = filename_env
+    
 cwd = os.getcwd()
 save_path = os.path.join(cwd, fn)
 

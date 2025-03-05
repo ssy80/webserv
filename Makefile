@@ -58,4 +58,4 @@ re: fclean all
 .PHONY: all clean fclean re
 
 run: ${NAME}
-	./${NAME} config.txt
+	./${NAME}
