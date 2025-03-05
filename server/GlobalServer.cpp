@@ -246,12 +246,15 @@ void GlobalServer::startServer()
                             removeConnection(conn);
                             break;
                         } 
-                        else
+                        else if (count == -1)  //added
                         {
                             //if (errno == EAGAIN || errno == EWOULDBLOCK)         // no more data, stop recv
                             //    break; 
                             //std::cerr << "Error: recv" << std::endl;            //other error when recv, close 
                             //closeConn = true;
+                            //closeConn = true;           //added 
+                            //removeConnection(conn);     //added
+
                             break;
                         }
                     }
@@ -272,12 +275,16 @@ void GlobalServer::startServer()
                         std::cerr << "Info: no Content-Length" << std::endl;
                             //        removeConnection(conn);
                             //        continue;
-                    }
-                    std::cout << "parse Content-Length: " <<  contentLength  << std::endl;*/
+                    }*/
+                    std::cout << "parse Content-Length: " <<  contentLength  << std::endl;
 
                     size_t total_expected = headerEnd + 4 + contentLength;              // Calculate expected total length: headers + CRLF CRLF + body.
                     bool isMaxBodySize = false;
-                    if (configServer.getMaxBodySize() > 0 && (conn->buffer.size() - (headerEnd + 4) > (long unsigned int)configServer.getMaxBodySize()))
+                    if(configServer.getMaxBodySize() > 0 && contentLength > configServer.getMaxBodySize())
+                    {
+                        isMaxBodySize = true;
+                    }
+                    else if (configServer.getMaxBodySize() > 0 && (conn->buffer.size() - (headerEnd + 4) > (long unsigned int)configServer.getMaxBodySize()))
                     {
                         isMaxBodySize = true;
                     }
@@ -299,9 +306,16 @@ void GlobalServer::startServer()
                     else
                     {
                         conn->responseBuffer = handleRequest(conn->buffer);
+                        
+                    std::cerr << "1conn->responseBuffer.size(): " << conn->responseBuffer.size() << std::endl;
+                        
+                        if (conn->responseBuffer.empty())
+                        {
+                            conn->responseBuffer = getErrorResponse(conn->buffer, "404");
+                        }
+
                         conn->bytesSent = 0;
                         conn->buffer.clear();
-                    std::cerr << "1conn->responseBuffer.size(): " << conn->responseBuffer.size() << std::endl;
                     }
 
                     struct epoll_event event;
@@ -329,7 +343,17 @@ void GlobalServer::startServer()
                         {
                             conn->bytesSent += n;
                             std::cerr << "--bytes_sent--: " << conn->bytesSent << std::endl;
-                        } 
+                        }
+                        else if(n == 0)        //client close   //added 
+                        {
+                            removeConnection(conn);
+                            break;
+                        }
+                        else if (n == -1)  //added 
+                        {
+                            removeConnection(conn);
+                            break;
+                        }
                         /*else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) 
                         
                             // Cannot send more now; break and wait for next EPOLLOUT.
@@ -337,13 +361,14 @@ void GlobalServer::startServer()
                         } */
                         else 
                         {
-                            std::cerr << "Error: send" << std::endl;
+                            //std::cerr << "Error: send" << std::endl;
                             //closeConn = true;
                             /*if (errno == EPIPE || errno == ECONNRESET) 
                             {
                                 removeConnection(conn); 
                                 break;
                             }*/
+                            removeConnection(conn);   ///added 
                             break;
                         }
                     }
