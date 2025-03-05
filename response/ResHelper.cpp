@@ -131,31 +131,34 @@ string getHandler(const Request& req, ConfigLocation& config) {
 			.sc(SC404)
 			->mc("Connection", "close")
 			->build()
-			.toString();
+			.toString() + CLRF;
 	}
 
 	// if autoindex is true
 	if (idx && req.url[req.url.size() - 1] == '/') {
-		string tmp  = listdir(config.getRoot());
-		string res = Response::ResBuilder()
-			.sc(SC200)
-			->ct(MIME::KEY + MIME::HTML)
-			->cl(tmp.size())
-			->mc("Connection", "close")
-			->build()
-			.toString();
-		return (res + tmp);
+		string tmp  = listdir(config.getRoot() + req.url);
+		vector<unsigned char> file = readRequestFile(config.getRoot() + req.url + config.getIndex());
+		if (file.empty()){
+			string res = Response::ResBuilder()
+				.sc(SC200)
+				->ct(MIME::KEY + MIME::HTML)
+				->cl(tmp.size())
+				->mc("Connection", "close")
+				->build()
+				.toString();
+			return (res + tmp);
+		}
 	}
 
 	// getting index page
 	if (req.url == "/") {
-		vector<unsigned char> file = readRequestFile(config.getRoot() + config.getIndex());
+		vector<unsigned char> file = readRequestFile(config.getRoot() + '/' + config.getIndex());
 		if (file.empty()) {
 			return Response::ResBuilder()
 			.sc(SC404)
 			->mc("Connection", "close")
 			->build()
-			.toString();
+			.toString() + CLRF;
 		}
 
 		string res = Response::ResBuilder()
@@ -178,7 +181,7 @@ string getHandler(const Request& req, ConfigLocation& config) {
 			.sc(SC404)
 			->mc("Connection", "close")
 			->build()
-			.toString();
+			.toString() + CLRF;
 		}
 
 		string res = Response::ResBuilder()
@@ -193,13 +196,20 @@ string getHandler(const Request& req, ConfigLocation& config) {
 	}
 
 	// other path
+	if (getFileExtension(req.url)==""){
+		return Response::ResBuilder()
+			.sc(SC404)
+			->mc("Connection", "close")
+			->build()
+			.toString() + CLRF;
+	}
 	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
 	if (file.empty()) {
 		return Response::ResBuilder()
 		.sc(SC404)
 		->mc("Connection", "close")
 		->build()
-		.toString();
+		.toString() + CLRF;
 	}
 
 	string res = Response::ResBuilder()
