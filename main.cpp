@@ -77,8 +77,7 @@ int main(int argc, char**argv)
     displayParseConfig(webServerConfig);
 
     AServer *globalServer = new GlobalServer(webServerConfig);
-    //AServer *globalServer = new YSServer();
-    //AServer *globalServer = new ReqServer();
+    // AServer *globalServer = new YSServer();
     globalServer->startServer();
     delete globalServer;
     

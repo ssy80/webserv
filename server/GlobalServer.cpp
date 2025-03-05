@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "../header/GlobalServer.hpp"
+#include "../header/ResHelper.hpp"
 #include <iostream>
 
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
@@ -535,39 +536,19 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
 
     std::string filePath = replacePath(req.url, requestPath, root);
 
-std::cout << "filePath: " << filePath << std::endl;
+    std::cout << "filePath: " << filePath << std::endl;
 
-std::string output;
-
+    std::string resp;
     if (req.method == "GET" && isContainIn(methods, "GET"))
-    {
-        //read file
-        std::string file = readServerFile(filePath);
-
-        Response res = Response::ResBuilder()
-									.sc(SC200)
-									//->ct(MIME::KEY + MIME::HTML)
-                                    ->ct(MIME::KEY + MIME::PNG)
-									->mc("Connection:", "close")
-									->cl(file.size())
-									->build();
-	    output = res.toString();
-
-        output = output + file + '\0';
-
-    }
-    return (output);
-
-
-    /* if (req.method == "GET" && isContainIn(methods, "GET"))
-        return getHandler(req, configLocation);
+        resp = getHandler(req, configLocation);
     else if (req.method == "POST" && isContainIn(methods, "POST"))
-        return postHandler(req, configLocation);
+        resp = postHandler(req, configLocation);
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
-        return deleteHandler(req, configLocation);
+        resp = deleteHandler(req, configLocation);
     else
-        return otherHandler();
-    */
+        resp = otherHandler();
+    resp[resp.size()-1] = '\0';
+    return resp;
 }
 
 
