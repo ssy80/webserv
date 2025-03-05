@@ -569,7 +569,7 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     else if (req.method == "POST" && isContainIn(methods, "POST"))
         resp = postHandler(req, configLocation);
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
-        resp = deleteHandler(req, configLocation);
+        resp = deleteHandler(configLocation);
     else
         resp = otherHandler();
     resp[resp.size()-1] = '\0';
