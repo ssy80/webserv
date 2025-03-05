@@ -154,9 +154,45 @@ string filetype(const string& url){
 	return map[ext];
 }
 
+static string bonusCookie(Request& req){
+	if (req.url=="/14789632"){
+		Response res = Response::ResBuilder()
+						.sc(SC200)
+						->mc("Set-Cookie","session=login")
+						->ct(MIME::KEY + MIME::HTML)
+						->cl(25)
+						->mc("Connection", "close")
+						->build();
+		return res.toString() + "<h1>login successful</h1>";
+	}
+	if (req.url == "/secretpage"){
+		req.print();
+		cout << "this is cookie " << req.headers["Cookie"] << endl;
+		if (req.headers["Cookie"] != "session=login\r"){
+			return Response::ResBuilder()
+						.sc(SC403)
+						->mc("Connection", "close")
+						->build()
+						.toString() + CLRF;
+		}
+		return Response::ResBuilder()
+			.sc(SC200)
+			->ct(MIME::KEY + MIME::HTML)
+			->cl(10)
+			->mc("Connection", "close")
+			->build()
+			.toString() + "Authorized ";
+	}
+	return "";
+}
+
 string getHandler(Request& req, ConfigLocation& config) {
 	bool idx = (config.getAutoIndex() == "on");
-
+	// cookie management for bonus
+	string bonusstr = bonusCookie(req);
+	if (!bonusstr.empty())
+		return bonusstr;
+	
 	string filePath = replacePath(req.url, config.getRequestPath(), config.getRoot());
 	
 	ifstream f((filePath).c_str());
@@ -252,6 +288,7 @@ string getHandler(Request& req, ConfigLocation& config) {
 		.sc(SC200)
 		->ct(MIME::KEY + filetype(config.getRoot()+ req.url))
 		->mc("Connection", "close")
+		->mc("Set-Cookie","session=login")
 		->cl(file.size())
 		->build()
 		.toString();
