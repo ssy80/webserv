@@ -559,7 +559,7 @@ std::string output;
     return (output);
 
 
-    /*if (req.method == "GET" && isContainIn(methods, "GET"))
+    /* if (req.method == "GET" && isContainIn(methods, "GET"))
         return getHandler(req, configLocation);
     else if (req.method == "POST" && isContainIn(methods, "POST"))
         return postHandler(req, configLocation);
@@ -567,6 +567,7 @@ std::string output;
         return deleteHandler(req, configLocation);
     else
         return otherHandler();
+    */
 }
 
 
