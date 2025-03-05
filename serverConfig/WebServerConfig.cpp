@@ -54,6 +54,31 @@ void WebServerConfig::parseWebServerConfigFile(std::string configFile)
         configServer.parseConfigServer(*it);                                      // parse each server string to ConfigServer obj 
         this->configServerVec.push_back(configServer);                            
     }
+
+    if (!validate())
+    {
+        std::cerr << "Error: invalid config [server]" << std::endl;
+        exit(1);
+    }
+}
+
+/*check only unique listening port for each servers*/
+bool WebServerConfig::validate()
+{
+    std::vector<int> listenPortsVec;
+    std::vector<ConfigServer>::iterator it;
+    for (it = this->configServerVec.begin(); it < this->configServerVec.end(); it++)
+    {
+       for (size_t i = 0; i < listenPortsVec.size(); i++)
+        {
+            if (listenPortsVec[i] == (*it).getListenPort())
+            {
+                return (false);
+            }
+        }
+        listenPortsVec.push_back((*it).getListenPort());
+    }
+    return (true);    
 }
 
 ConfigGlobal WebServerConfig::getConfigGlobal()
@@ -81,5 +106,7 @@ std::vector<int> WebServerConfig::getUniquePortsVec()
     std::vector<int> uniquePortsVec(uniquePortsSet.begin(), uniquePortsSet.end());
     return uniquePortsVec;
 }
+
+
 
 

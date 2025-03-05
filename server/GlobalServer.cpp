@@ -72,23 +72,21 @@ int GlobalServer::createAndBind(int port)
 
     if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == -1) 
     {
-        std::cerr << "Error: bind" << std::endl; 
+        std::cerr << "Error: bind listen port" << std::endl; 
         exit(1);
     }
-
     return sockfd;
 }
 
-
+/*Create epoll instance*/
 void GlobalServer::createEpoll()
 {
-    this->epoll_fd = epoll_create(10);                                                      //Create epoll instance.
+    this->epoll_fd = epoll_create(10);                                                      
     if (this->epoll_fd < 0) 
     {
         std::cerr << "Error: epoll_create" << std::endl; 
         exit(1);
     }
-    std::cerr << "1this->epoll_fd" << this->epoll_fd << std::endl;
 }
 
 void GlobalServer::startListeningPort(std::vector<int> uniquePortsVec)
@@ -121,7 +119,7 @@ void GlobalServer::startListeningPort(std::vector<int> uniquePortsVec)
         struct epoll_event event;                                                           // For listening sockets, we can simply store the fd in epoll_event.data.fd.
         memset(&event, 0, sizeof(event));
 
-        event.events = EPOLLET | EPOLLIN; //| EPOLLET;                                   // set level triggered(EPOLLIN) for listening sockets, edge trggered(EPOLLET) needed??
+        event.events = EPOLLET | EPOLLIN;
         event.data.fd = sockfd;
         if (epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, sockfd, &event) < 0) 
         {
@@ -170,7 +168,7 @@ void GlobalServer::startServer()
     char buffer[READ_BUFFER];
     int nunEventFds;
 
-    while (true)                                                                                   // check event loop.
+    while (true)                                                                            // check event loop.
     {                   
         nunEventFds = epoll_wait(this->epoll_fd, events, max_events, 1000);                 //get number events need to check
         if (nunEventFds < 0)
@@ -206,9 +204,9 @@ void GlobalServer::startServer()
                     int clientFd = accept(fd, (struct sockaddr *)&clientAddr, &clientLen);
                     if (clientFd < 0) 
                     {
-                        if (errno == EAGAIN || errno == EWOULDBLOCK)               // No more connections.
-                            break;
-                        std::cerr << "Error: accept connection" << std::endl; 
+                        //if (errno == EAGAIN || errno == EWOULDBLOCK)               // No more connections.
+                        //    break;
+                        //std::cerr << "Error: accept connection" << std::endl; 
                         break;
                     }
                     if (setNonBlocking(clientFd) < 0) 
@@ -217,13 +215,9 @@ void GlobalServer::startServer()
                         continue;
                     }
                     addConnection(clientFd);
-
-                    //char client_ip[INET_ADDRSTRLEN];
-                    //inet_ntop(AF_INET, &clientAddr.sin_addr, client_ip, sizeof(client_ip));
-                    //std::cout << "Accepted connection from " <<  client_ip << ":" << ntohs(clientAddr.sin_port) << std::endl;
                 }
             }  
-            else                                              //process event from a client socket, recv data from client
+            else                                              //process event from a client fd, recv data from client
             {
                 Connection* conn = static_cast<Connection*>(events[i].data.ptr);
                 bool closeConn = false;
@@ -240,13 +234,13 @@ void GlobalServer::startServer()
                         {
                             conn->buffer.append(buffer, count);
                         } 
-                        else if (count == 0)                                    // client closed connection, close
+                        else if (count == 0)                                    // client closed connection
                         {
                             closeConn = true;
                             removeConnection(conn);
                             break;
                         } 
-                        else if (count == -1)  //added
+                        else if (count == -1)
                         {
                             //if (errno == EAGAIN || errno == EWOULDBLOCK)         // no more data, stop recv
                             //    break; 
@@ -254,7 +248,6 @@ void GlobalServer::startServer()
                             //closeConn = true;
                             //closeConn = true;           //added 
                             //removeConnection(conn);     //added
-
                             break;
                         }
                     }
@@ -266,18 +259,15 @@ void GlobalServer::startServer()
                     if (headerEnd == std::string::npos)                       //header incomplete; wait for next EPOLLIN event.
                         break;
 
-        ConfigServer configServer = parseConfigServer(conn->buffer);                        //get correct serve according to config
-        //std::cout << "1max_body_size: " << configServer.getMaxBodySize() << std::endl;
-
-                    int contentLength = parseContentLength(conn->buffer);    // Parse Content-Length from header
+                    ConfigServer configServer = parseConfigServer(conn->buffer);         //get correct serve according to config
+                    int contentLength = parseContentLength(conn->buffer);                // Parse Content-Length from header
                     /*if (contentLength < 0) 
                     {
                         std::cerr << "Info: no Content-Length" << std::endl;
                             //        removeConnection(conn);
                             //        continue;
                     }*/
-                    std::cout << "parse Content-Length: " <<  contentLength  << std::endl;
-
+                    //std::cout << "parse Content-Length: " <<  contentLength  << std::endl;
                     size_t total_expected = headerEnd + 4 + contentLength;              // Calculate expected total length: headers + CRLF CRLF + body.
                     bool isMaxBodySize = false;
                     if(configServer.getMaxBodySize() > 0 && contentLength > configServer.getMaxBodySize())
@@ -551,10 +541,21 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::string redirect = configLocation.getRedirect();
 
     std::string filePath = replacePath(req.url, requestPath, root);
-
-    // this->webServerConfig.getConfigGlobal().getTimeout();
+    std::cout << "filePath: " << filePath << std::endl;  
 
     std::string resp;
+    if (!redirect.empty())
+    {
+        Response res = Response::ResBuilder()
+                .sc(SC301)
+                ->mc("Location", redirect)
+                ->mc("Connection", "close")
+                ->build();
+        resp = res.toString();
+        return (resp);
+    }
+
+    
     if (req.method == "GET" && isContainIn(methods, "GET"))
         resp = getHandler(req, configLocation);
     else if (req.method == "POST" && isContainIn(methods, "POST"))

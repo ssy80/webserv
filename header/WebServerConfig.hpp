@@ -32,14 +32,9 @@ class WebServerConfig
         ConfigGlobal configGlobal;
         std::vector<ConfigServer> configServerVec;
 
-        //string readFile(string filePath); 
         string getGlobalStr(string configStr);
         std::vector<string> getServerStr(string configFileStr);
-
-        //bool isValidInt(std::string valueStr);
-        //bool isValidPort(std::string portStr);
-        //void isValidKeyValue(std::map<std::string, std::string> keyValueMap);
-        //void validateConfigServer(std::vector<ConfigServer> configServerVec);
+        bool validate();
 
     public:
         WebServerConfig();
@@ -49,11 +44,8 @@ class WebServerConfig
 
         ConfigGlobal getConfigGlobal();
         std::vector<ConfigServer> getConfigServerVec();
-        
-        void parseWebServerConfigFile(string configFile);
-
         std::vector<int> getUniquePortsVec();
-
+        void parseWebServerConfigFile(string configFile);
 };
 
 

@@ -352,11 +352,17 @@ std::string replacePath(const std::string& url, const std::string& requestPath, 
 {
     if (url.compare(0, requestPath.size(), requestPath) == 0) 
     {
+        if (url.substr(requestPath.size()).find("/") == 0)
+        {
+            return (root + url.substr(requestPath.size())); 
+        }
+        else
+        {
+            return (root + "/" + url.substr(requestPath.size()));          // Remove the requestPath portion from the URL and append the rest to the root.
+        }
         
-        return root + "/" + url.substr(requestPath.size());          // Remove the requestPath portion from the URL and append the rest to the root.
     }
-   
-    return url;                                               // If the URL doesn't start with requestPath, return it unchanged.
+    return (url);                                          
 }
 
 
