@@ -298,48 +298,45 @@ string getHandler(Request& req, ConfigLocation& config) {
 
 // post handler is used to upload 1 file through the cgi script
 string postHandler(Request& req, ConfigLocation& config) {
+	
+	// reject other content types
+	if (req.headers["Content-Type"].find("multipart/form-data") == std::string::npos
+		|| req.url.find("/cgi-bin") == std::string::npos
+		|| req.files.empty()) {
+		return Response::ResBuilder()
+			.sc(SC403)
+			->mc("Connection", "close")
+			->build()
+			.toString();
+	}
+	
 	req.print();
+
+	setenv("UPLOAD_FILENAME", "rawCommands.txt", 1);
+	setenv("UPLOAD_CONTENT", "hello", 1);
+	//setenv("UPLOAD_FILENAME", req.files["filename"].c_str(), 1);
 	
 	string filePath = replacePath(req.url, config.getRequestPath(), config.getRoot());
-
-
-	if (req.files.empty()) {
-		std::cout << "NO FILES" << std::endl;
-		return "";
-	}
-
-	std::cout << "FILES: " << req.files["filename"] << std::endl;
 	
-	if (req.url.find("/cgi-bin") != std::string::npos) {
-		std::cout << "executing cgi" << std::endl;
-
-		setenv("UPLOAD_FILENAME", req.files["filename"].c_str(), 1);
-		vector<unsigned char> file = readRequestCGI(filePath);
-		std::cout << string(file.begin(), file.end()) << std::endl;
-		if (file.empty()) {
-			return Response::ResBuilder()
-			.sc(SC404)
-			->mc("Connection", "close")
-			->build()
-			.toString();
-		}
-
-		string res = Response::ResBuilder()
-			.sc(SC201)
-			->mc("Connection", "close")
-			->cl(file.size())
-			->build()
-			.toString();
-		
-		res.insert(res.end(), file.begin(), file.end());
-		return res;
-	}
-
-	return Response::ResBuilder()
-		.sc(SC403)
+	vector<unsigned char> file = readRequestCGI(filePath);
+	std::cout << string(file.begin(), file.end()) << std::endl;
+	if (file.empty()) {
+		return Response::ResBuilder()
+		.sc(SC500)
 		->mc("Connection", "close")
 		->build()
 		.toString();
+	}
+
+	string res = Response::ResBuilder()
+		.sc(SC201)
+		->mc("Connection", "close")
+		->cl(file.size())
+		->build()
+		.toString();
+	
+	res.insert(res.end(), file.begin(), file.end());
+	return res;
 }
 
 // when delete handler is called, it will delete all files in the folder
