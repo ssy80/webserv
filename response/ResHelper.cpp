@@ -1,5 +1,6 @@
 #include "../header/ResHelper.hpp"
 #include <unistd.h>
+#include <sys/wait.h>
 
 vector<unsigned char> readRequestFile(const string& resource){
 	ifstream file;
@@ -21,17 +22,49 @@ vector<unsigned char> readRequestFile(const string& resource){
 vector<unsigned char> readRequestCGI(const string& scriptPath) {
 	vector<unsigned char> output;
 	output.reserve(2048);
-
-    FILE* pipe = popen(scriptPath.c_str(), "r"); // Execute CGI script
-    if (!pipe)
+	
+	int fd[2];
+	if (pipe(fd) == -1) {
+		std::cerr << "Pipe failed" << std::endl;
 		return output;
+	}
+	
+	pid_t pid = fork();
+	if (pid < 0) {
+		std::cerr << "Fork failed" << std::endl;
+		return output;
+	}
+	
+	if (pid == 0) {
+		close(fd[0]);
+		dup2(fd[1], STDOUT_FILENO);
+		close(fd[1]);
 
-    char buffer[128];
-	size_t bytesRead;
-	while ((bytesRead = fread(buffer, 1, sizeof(buffer), pipe)) > 0)
-		output.insert(output.end(), buffer, buffer + bytesRead);
-    pclose(pipe);
-    return output;
+		char* args[] = {const_cast<char*>(scriptPath.c_str()), NULL};
+		execvp(args[0], args);
+		std::cerr << "Exec failed" << std::endl;
+		exit(1);
+
+	} else {
+		close(fd[1]);
+
+		char buffer[256];
+		ssize_t bytesRead;
+		long start = getCurrentTimeMs();
+        
+		while (getCurrentTimeMs() - start < TIMEOUT) {
+			bytesRead = read(fd[0], buffer, sizeof(buffer));
+			if (bytesRead > 0) {
+				output.insert(output.end(), buffer, buffer + bytesRead);
+			} else {
+				break;
+			}
+		}
+		
+		close(fd[0]);
+		waitpid(pid, NULL, 0);
+		return output;
+	}
 }
 
 string getFileExtension(const string& filename) {
@@ -121,10 +154,12 @@ string filetype(const string& url){
 	return map[ext];
 }
 
-string getHandler(const Request& req, ConfigLocation& config) {
+string getHandler(Request& req, ConfigLocation& config) {
 	bool idx = (config.getAutoIndex() == "on");
 
-	ifstream f((config.getRoot() + req.url).c_str());
+	string filePath = replacePath(req.url, config.getRequestPath(), config.getRoot());
+	
+	ifstream f((filePath).c_str());
 
 	// cannot find file, return 404
 	if (!f.good()){
@@ -176,7 +211,7 @@ string getHandler(const Request& req, ConfigLocation& config) {
 	
 	// getting cgi files
 	if (req.url.find("/cgi-bin") != std::string::npos) {
-		vector<unsigned char> file = readRequestCGI(config.getRoot() + req.url);
+		vector<unsigned char> file = readRequestCGI(filePath);
 		if (file.empty()) {
 			return Response::ResBuilder()
 			.sc(SC404)
@@ -226,10 +261,24 @@ string getHandler(const Request& req, ConfigLocation& config) {
 }
 
 // post handler is used to upload 1 file through the cgi script
-string postHandler(const Request& req, ConfigLocation& config) {
+string postHandler(Request& req, ConfigLocation& config) {
+	req.print();
+	
+	string filePath = replacePath(req.url, config.getRequestPath(), config.getRoot());
+
+
+	if (req.files.empty()) {
+		std::cout << "NO FILES" << std::endl;
+		return "";
+	}
+
+	std::cout << "FILES: " << req.files["filename"] << std::endl;
+	
 	if (req.url.find("/cgi-bin") != std::string::npos) {
 		std::cout << "executing cgi" << std::endl;
-		vector<unsigned char> file = readRequestCGI(config.getRoot() + req.url);
+
+		setenv("UPLOAD_FILENAME", req.files["filename"].c_str(), 1);
+		vector<unsigned char> file = readRequestCGI(filePath);
 		std::cout << string(file.begin(), file.end()) << std::endl;
 		if (file.empty()) {
 			return Response::ResBuilder()
@@ -259,7 +308,8 @@ string postHandler(const Request& req, ConfigLocation& config) {
 
 // when delete handler is called, it will delete all files in the folder
 string deleteHandler(ConfigLocation& config) {
-	string dir_path = config.getRoot() + "/tmp";
+	std::cout << config.getRoot() << std::endl;
+	string dir_path = "www/tmp";
 
 	// check if directory exists
 	struct stat st;

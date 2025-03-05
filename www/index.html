@@ -55,7 +55,24 @@
             <p>File: <input type="file" name="filename" required /></p>
             <p><input type="submit" value="Upload" /></p>
         </form>
-        
+
+        <button onclick="deleteFiles()">Delete Files</button>
+        <script>
+            async function deleteFiles() {
+                try {
+                    const response = await fetch("/www/index.html", {method: "DELETE"});
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    const data = await response.text();
+                    alert("successs");
+                } catch (error) {
+                    console.error("Failed to delete files")
+                    alert("Failed to delete files")
+                }
+            }
+        </script>
     </main>
     <footer>
         <p>&copy; 2025 webserv project</p>

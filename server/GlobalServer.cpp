@@ -295,7 +295,7 @@ void GlobalServer::startServer()
                     }                                                      
                         
                     //process request here
-                    std::cerr << "request_content: " << std::endl << conn->buffer << std::endl;      //come to here, means all recv
+                    // std::cerr << "request_content: " << std::endl << conn->buffer << std::endl;      //come to here, means all recv
 
                     if (isMaxBodySize)
                     {
@@ -307,7 +307,7 @@ void GlobalServer::startServer()
                     {
                         conn->responseBuffer = handleRequest(conn->buffer);
                         
-                    std::cerr << "1conn->responseBuffer.size(): " << conn->responseBuffer.size() << std::endl;
+                    //std::cerr << "1conn->responseBuffer.size(): " << conn->responseBuffer.size() << std::endl;
                         
                         if (conn->responseBuffer.empty())
                         {
@@ -466,7 +466,7 @@ ConfigServer GlobalServer::parseConfigServer(std::string requestStr)
         if (isContainIn(configServer.getServerName(), server_name))
         {
             isServerNameMatch = true;
-            std::cout << "isServerNameMatch " << isServerNameMatch << std::endl;
+            //std::cout << "isServerNameMatch " << isServerNameMatch << std::endl;
             break;                           
         }
     }
@@ -529,14 +529,11 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);
 
     Request req = RequestParser::parseRequest(requestStr);
-    std::cout << "Method: " << req.method << std::endl;
-    std::cout << "URL: " << req.url << std::endl;
 
     ConfigLocation configLocation;
     std::vector<ConfigLocation>::iterator it;
     for (it = configLocationVec.begin(); it < configLocationVec.end(); it++)
     {
-        //std::cout << "request_path: " << (*it).getRequestPath() << std::endl;
         configLocation = (*it);
         std::string requestPath = configLocation.getRequestPath();
 
@@ -545,12 +542,6 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
             break;
         }
     }
-
-    std::cout << std::endl;
-    std::cout << "handleRequest request_path: " << configLocation.getRequestPath() << std::endl;
-    std::cout << "handleRequest root: " << configLocation.getRoot() << std::endl;
-    //std::cout << "getMaxBodySize max_body_size: " << configServer.getMaxBodySize() << std::endl;
-    std::cout << std::endl;
 
     std::string requestPath = configLocation.getRequestPath();
     std::string root = configLocation.getRoot();
@@ -561,7 +552,7 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
 
     std::string filePath = replacePath(req.url, requestPath, root);
 
-    std::cout << "filePath: " << filePath << std::endl;
+    // this->webServerConfig.getConfigGlobal().getTimeout();
 
     std::string resp;
     if (req.method == "GET" && isContainIn(methods, "GET"))
