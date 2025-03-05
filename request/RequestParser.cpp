@@ -50,10 +50,17 @@ void RequestParser::parsePartFormData(istringstream& stream, Request& request, c
         while (line[pos] != '"')
           name+=line.at(pos++);
         // parsing contentdisposition
-        pos = line.find("Content-Disposition: ");
+        // pos = line.find("Content-Disposition: ");
+        // if (pos != string::npos){
+        //   pos+= 21;
+        //   while (line[pos] != ';')
+        //     contentDisposition+=line[pos++];
+        // }
+        // parsing filename into formfield
+        pos = line.find("filename=");
         if (pos != string::npos){
-          pos+= 21;
-          while (line[pos] != ';')
+          pos+= 10;
+          while (line[pos] != '"')
             contentDisposition+=line[pos++];
         }
       }
