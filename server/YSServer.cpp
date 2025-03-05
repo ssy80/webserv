@@ -48,7 +48,7 @@ static void handle_client(int client_socket, string dir) {
 		resp = postHandler(req, configLocation);
 	} else if (req.method == "DELETE") {
 		std::cout << "entering delete handler" << std::endl;      
-		resp = deleteHandler(req, configLocation);
+		resp = deleteHandler(configLocation);
 	} else {   
 		std::cout << "entering other handler" << std::endl;
 		resp = otherHandler();
