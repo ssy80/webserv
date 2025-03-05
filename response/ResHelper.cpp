@@ -127,31 +127,37 @@ string getHandler(const Request& req, ConfigLocation& config) {
 
 	// cannot find file, return 404
 	if (!f.good()){
-		string res = Response::ResBuilder()
+		return Response::ResBuilder()
 			.sc(SC404)
 			->mc("Connection", "close")
 			->build()
 			.toString();
-		return res;
 	}
 
 	// if autoindex is true
 	if (idx && req.url[req.url.size() - 1] == '/') {
-		string tmp  = listdir(config.getRoot() + req.url);
+		string tmp  = listdir(config.getRoot());
 		string res = Response::ResBuilder()
-							.sc(SC200)
-							->ct(MIME::KEY + MIME::HTML)
-							->cl(tmp.size())
-							->mc("Connection", "close")
-							->build()
-							.toString();
+			.sc(SC200)
+			->ct(MIME::KEY + MIME::HTML)
+			->cl(tmp.size())
+			->mc("Connection", "close")
+			->build()
+			.toString();
 		return (res + tmp);
 	}
 
 	// getting index page
 	if (req.url == "/") {
 		vector<unsigned char> file = readRequestFile(config.getRoot() + config.getIndex());
-		
+		if (file.empty()) {
+			return Response::ResBuilder()
+			.sc(SC404)
+			->mc("Connection", "close")
+			->build()
+			.toString();
+		}
+
 		string res = Response::ResBuilder()
 			.sc(SC200)
 			->ct(MIME::KEY + MIME::HTML)
@@ -165,30 +171,37 @@ string getHandler(const Request& req, ConfigLocation& config) {
 	}
 	
 	// getting cgi files
-	if (req.url == "/cgi-bin/time.py" || req.url == "/cgi-bin/image.py") {
+	if (req.url.find("/cgi-bin") != std::string::npos) {
 		vector<unsigned char> file = readRequestCGI(config.getRoot() + req.url);
-		
-		string contentType;
-		if (req.url == "/cgi-bin/image.py") {
-       		contentType = "Content-Type: image/png";
-		} else {
-        	contentType = "Content-Type: text/html";
+		if (file.empty()) {
+			return Response::ResBuilder()
+			.sc(SC404)
+			->mc("Connection", "close")
+			->build()
+			.toString();
 		}
-		
+
 		string res = Response::ResBuilder()
 			.sc(SC200)
-			->ct(contentType)
 			->mc("Connection", "close")
 			->cl(file.size())
 			->build()
 			.toString();
-
+    
 		res.insert(res.end(), file.begin(), file.end());
 		return res;
 	}
 
 	// other path
 	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
+	if (file.empty()) {
+		return Response::ResBuilder()
+		.sc(SC404)
+		->mc("Connection", "close")
+		->build()
+		.toString();
+	}
+
 	string res = Response::ResBuilder()
 		.sc(SC200)
 		->ct(MIME::KEY + filetype(config.getRoot()+ req.url))
@@ -196,42 +209,55 @@ string getHandler(const Request& req, ConfigLocation& config) {
 		->cl(file.size())
 		->build()
 		.toString();
-
-    res.insert(res.end(), file.begin(), file.end());
+  
+  res.insert(res.end(), file.begin(), file.end());
 	return res;
 }
 
 string postHandler(const Request& req, ConfigLocation& config) {
-	std::ifstream src(req.url.c_str(), ios::binary);
-	
-	if (!src.good()) {
-		string res = Response::ResBuilder()
+  if (req.url.find("/cgi-bin") != std::string::npos) {
+		std::cout << "executing cgi" << std::endl;
+		vector<unsigned char> file = readRequestCGI(config.getRoot() + req.url);
+		std::cout << string(file.begin(), file.end()) << std::endl;
+		if (file.empty()) {
+			return Response::ResBuilder()
 			.sc(SC404)
 			->mc("Connection", "close")
 			->build()
 			.toString();
-		return res;
-	}
+		}
 
-	string dir = config.getRoot() + "./cache" + req.url;
-	std::ofstream dst(dir.c_str(), ios::binary);
-	if (!dst.good()) {
 		string res = Response::ResBuilder()
-			.sc(SC500)
+			.sc(SC201)
 			->mc("Connection", "close")
+			->cl(file.size())
 			->build()
 			.toString();
+		
+		res.insert(res.end(), file.begin(), file.end());
 		return res;
 	}
 
-	dst << src.rdbuf();
-	
-	// file saved, return 201
-	string res = Response::ResBuilder()
-		.sc(SC201)
+	// other path
+	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
+	if (file.empty()) {
+		return Response::ResBuilder()
+		.sc(SC404)
 		->mc("Connection", "close")
 		->build()
 		.toString();
+	}
+
+	// file saved, return 201
+	string res = Response::ResBuilder()
+		.sc(SC201)
+		->ct(MIME::KEY + filetype(config.getRoot()))
+		->mc("Connection", "close")
+		->cl(file.size())
+		->build()
+		.toString();
+	
+	res.insert(res.end(), file.begin(), file.end());
 	return res;
 }
 

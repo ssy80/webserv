@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import datetime
 
-print("<h3>Current Server Time</h3>")
-print(f"<p>{datetime.datetime.now()}</p>")
+text = f"<h2>Current Server Time</h2><p>{datetime.datetime.now()}</p>"
+
+print(text)

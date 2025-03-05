@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sys
 
-# Path to the image
 image_path = "./www/images/42.png"
 
 try:

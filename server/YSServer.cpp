@@ -27,18 +27,20 @@ static void handle_client(int client_socket, string dir) {
 			return;
 	}
 	buffer[bytes_received] = '\0';  // Null-terminate the buffer to make it a valid string
-
-
+	
+	std::cout << "~~~ BUFFER: " << buffer << std::endl;
     Request req = RequestParser::parseRequest(buffer);
-    std::cout << "Method: " << req.method << std::endl;
-    std::cout << "URL: " << req.url << std::endl;
+    // std::cout << "Method: " << req.method << std::endl;
+    // std::cout << "URL: " << req.url << std::endl;
+	std::cout << "~~~ REQ ~~~ " << std::endl;
+	req.print();
 	
 	ConfigLocation configLocation;
 	configLocation.populate("on", "index.html", "POST GET DELETE", "", "/", "./www");
 
 	std::string resp;
 
-  if (req.method == "GET") {
+    if (req.method == "GET") {
 		std::cout << "entering get handler" << std::endl;      
 		resp = getHandler(req, configLocation);
 	} else if (req.method == "POST") {
@@ -51,7 +53,7 @@ static void handle_client(int client_socket, string dir) {
 		std::cout << "entering other handler" << std::endl;
 		resp = otherHandler();
 	}
-  resp[resp.size()-1] = '\0';
+
 	sendRes(client_socket, resp);
 	close(client_socket);
 }

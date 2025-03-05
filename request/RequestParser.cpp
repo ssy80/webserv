@@ -78,6 +78,19 @@ static void parsePartFormData(istringstream& stream, Request& request, const str
     request.formFields[name] = contentDisposition;
 }
 
+string RequestParser::extractFilename(const std::string& contentDisposition) {
+	std::cout << "starting extract" << std::endl;
+	string searchStr = "filename=";
+	size_t filenamePos = contentDisposition.find(searchStr);
+	std::cout << filenamePos << std::endl;
+	if (filenamePos != string::npos) {
+		size_t startPos = contentDisposition.find("\"", filenamePos) + 1;
+		std::cout << "startPos" << startPos << std::endl;
+		size_t endPos = contentDisposition.find("\"", startPos);
+		std::cout << "endPos" << endPos << std::endl;
+		return contentDisposition.substr(startPos, endPos - startPos);
+	}
+	return "";
 
 void RequestParser::parseMultipartFormData(istringstream& stream, Request& request, const string& contentType) {
   size_t boundaryPos = contentType.find("boundary=");
