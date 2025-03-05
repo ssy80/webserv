@@ -197,8 +197,11 @@ string getHandler(Request& req, ConfigLocation& config) {
 	
 	ifstream f((filePath).c_str());
 
+	std::cout << "HERE 1" << std::endl;
+
 	// cannot find file, return 404
 	if (!f.good()){
+		std::cout << "HERE 0" << std::endl;
 		return Response::ResBuilder()
 			.sc(SC404)
 			->mc("Connection", "close")
@@ -208,6 +211,7 @@ string getHandler(Request& req, ConfigLocation& config) {
 
 	// if autoindex is true
 	if (idx && req.url[req.url.size() - 1] == '/') {
+		std::cout << "HERE 2" << std::endl;
 		string tmp  = listdir(config.getRoot() + req.url);
 		vector<unsigned char> file = readRequestFile(config.getRoot() + req.url + config.getIndex());
 		if (file.empty()){
@@ -224,6 +228,7 @@ string getHandler(Request& req, ConfigLocation& config) {
 
 	// getting index page
 	if (req.url == "/") {
+		std::cout << "HERE 3" << std::endl;
 		vector<unsigned char> file = readRequestFile(config.getRoot() + '/' + config.getIndex());
 		if (file.empty()) {
 			return Response::ResBuilder()
@@ -247,6 +252,7 @@ string getHandler(Request& req, ConfigLocation& config) {
 	
 	// getting cgi files
 	if (req.url.find("/cgi-bin") != std::string::npos) {
+		std::cout << "HERE 4" << std::endl;
 		vector<unsigned char> file = readRequestCGI(filePath);
 		if (file.empty()) {
 			return Response::ResBuilder()
@@ -268,6 +274,7 @@ string getHandler(Request& req, ConfigLocation& config) {
 	}
 
 	// other path
+	std::cout << "HERE 5" << std::endl;
 	if (getFileExtension(req.url)==""){
 		return Response::ResBuilder()
 			.sc(SC404)
@@ -275,6 +282,8 @@ string getHandler(Request& req, ConfigLocation& config) {
 			->build()
 			.toString() + CLRF;
 	}
+
+	std::cout << "HERE 6" << std::endl;
 	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
 	if (file.empty()) {
 		return Response::ResBuilder()
@@ -283,7 +292,8 @@ string getHandler(Request& req, ConfigLocation& config) {
 		->build()
 		.toString() + CLRF;
 	}
-
+	
+	std::cout << "HERE 7" << std::endl;
 	string res = Response::ResBuilder()
 		.sc(SC200)
 		->ct(MIME::KEY + filetype(config.getRoot()+ req.url))
@@ -302,22 +312,19 @@ string postHandler(Request& req, ConfigLocation& config) {
 	// reject other content types
 	if (req.headers["Content-Type"].find("multipart/form-data") == std::string::npos
 		|| req.url.find("/cgi-bin") == std::string::npos
-		|| req.files.empty()) {
+		|| req.files.empty()
+		|| req.formFields.empty()) {
 		return Response::ResBuilder()
 			.sc(SC403)
 			->mc("Connection", "close")
 			->build()
-			.toString();
+			.toString() + CLRF;
 	}
-	
-	req.print();
 
-	setenv("UPLOAD_FILENAME", "rawCommands.txt", 1);
-	setenv("UPLOAD_CONTENT", "hello", 1);
-	//setenv("UPLOAD_FILENAME", req.files["filename"].c_str(), 1);
-	
+	setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
+	setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
 	string filePath = replacePath(req.url, config.getRequestPath(), config.getRoot());
-	
+
 	vector<unsigned char> file = readRequestCGI(filePath);
 	std::cout << string(file.begin(), file.end()) << std::endl;
 	if (file.empty()) {
@@ -325,7 +332,7 @@ string postHandler(Request& req, ConfigLocation& config) {
 		.sc(SC500)
 		->mc("Connection", "close")
 		->build()
-		.toString();
+		.toString() + CLRF;
 	}
 
 	string res = Response::ResBuilder()
@@ -351,7 +358,7 @@ string deleteHandler(ConfigLocation& config) {
 			.sc(SC200)
 			->mc("Connection", "close")
 			->build()
-			.toString();
+			.toString() + CLRF;
 	}
 
 	// delete files in directory
@@ -361,7 +368,7 @@ string deleteHandler(ConfigLocation& config) {
 			.sc(SC200)
 			->mc("Connection", "close")
 			->build()
-			.toString();
+			.toString() + CLRF;
 	}
 
 	struct dirent *entry;
@@ -381,11 +388,12 @@ string deleteHandler(ConfigLocation& config) {
 		}
 	}
 	closedir(dir);
+	std::cout << "OK" << std::endl;
 	return Response::ResBuilder()
 		.sc(SC200)
 		->mc("Connection", "close")
 		->build()
-		.toString();
+		.toString() + CLRF;
 }
 
 string otherHandler(){
@@ -393,7 +401,7 @@ string otherHandler(){
 		.sc(SC406)
 		->mc("Connection", "close")
 		->build()
-		.toString();
+		.toString() + CLRF;
 	return res;
 }
 

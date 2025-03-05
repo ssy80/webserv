@@ -564,6 +564,8 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     else
         resp = otherHandler();
     resp[resp.size()-1] = '\0';
+
+    std::cout << resp << std::endl;
     return resp;
 }
 

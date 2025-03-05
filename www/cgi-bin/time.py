@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import datetime
 
-text = f"<h2>Current Server Time</h2><p>{datetime.datetime.now()}</p>"
+try:
+    print(f"<h2>Current Server Time</h2><p>{datetime.datetime.now()}</p>")
 
-print(text)
+except:
+    print("<h2>Error</h2>")

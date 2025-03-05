@@ -37,7 +37,7 @@
         <h1>Welcome to Webserv</h1>
     </header>
     <main>
-        <div id="server-time">Loading time...</div>
+        <div id="server-time">Loading server time...</div>
         <script>
             async function loadTime() {
                 const response = await fetch('/cgi-bin/time.py');
@@ -47,30 +47,30 @@
             }
             loadTime();
         </script>
+    
+        <div id="unix-time">Loading unix time...</div>
+        <script>
+            async function loadUnixTime() {
+                const response = await fetch('/cgi-bin/time2.cgi');
+                if (!response.ok) throw new Error("Failed to load");
+                const text = await response.text();
+                document.getElementById('unix-time').innerHTML = text;
+            }
+            loadUnixTime();
+        </script>
 
         <img src="/cgi-bin/image.py" alt="image" class="center" />
         <img src="/images/cat.gif" alt="cat" class="center" />
 
         <form enctype="multipart/form-data" action="/cgi-bin/save_file.py" method="post">
             <p>File: <input type="file" name="filename" required /></p>
-            <p><input type="submit" value="Upload" /></p>
+            <p><input type="submit" value="Upload File" /></p>
         </form>
-
         <button onclick="deleteFiles()">Delete Files</button>
         <script>
             async function deleteFiles() {
-                try {
                     const response = await fetch("/www/index.html", {method: "DELETE"});
-                    if (!response.ok) {
-                        throw new Error(`Error: ${response.status} ${response.statusText}`);
-                    }
-                    
-                    const data = await response.text();
                     alert("successs");
-                } catch (error) {
-                    console.error("Failed to delete files")
-                    alert("Failed to delete files")
-                }
             }
         </script>
     </main>
