@@ -544,7 +544,13 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::cout << "filePath: " << filePath << std::endl;  
 
     std::string resp;
-    if (!redirect.empty())
+
+    if (req.version != "HTTP/1.1")                              //handle wrong version
+    {
+        return (getErrorResponse(requestStr, "501"));
+    }
+
+    if (!redirect.empty())                                     //handle redirect
     {
         Response res = Response::ResBuilder()
                 .sc(SC301)
