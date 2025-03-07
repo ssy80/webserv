@@ -35,7 +35,7 @@ NAME	    = webserv
 
 AR			= ar rcs
 
-CPP			= c++ -Wall -Wextra -Werror
+CPP			= g++ -Wall -Wextra -Werror
 
 STD98_FLAG  = -std=c++98
 

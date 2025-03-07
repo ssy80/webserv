@@ -307,32 +307,34 @@ string getHandler(Request& req, ConfigLocation& config) {
 }
 
 string getChunks(string chunks) {
-	if (chunks.empty())
-		return "1";
+	std::cout << "CHUNKS: " << chunks << std::endl;
 	return "";
 }
 
 // post handler is used to upload 1 file through the cgi script
 string postHandler(Request& req, ConfigLocation& config) {
 	// reject other content types
-	if (req.headers["Content-Type"].find("multipart/form-data") == std::string::npos
-		|| req.url.find("/cgi-bin/save_file.py") == std::string::npos
-		|| req.files.empty()
-		|| req.formFields.empty()) {
-		return Response::ResBuilder()
-			.sc(SC403)
-			->mc("Connection", "close")
-			->build()
-			.toString() + CLRF;
-	}
+	// if (((req.headers["Content-Type"].find("multipart/form-data") == std::string::npos) 
+	// && (req.headers["Transfer-Encoding"].find("chunked") == std::string::npos))
+	// 	|| req.url.find("/cgi-bin/save_file.py") == std::string::npos
+	// 	|| req.files.empty()
+	// 	|| req.formFields.empty()) {
+	// 	return Response::ResBuilder()
+	// 		.sc(SC403)
+	// 		->mc("Connection", "close")
+	// 		->build()
+	// 		.toString() + CLRF;
+	// }
 
 	setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
-	if (req.headers.find("Transfer-Encoding") == req.headers.end()
-		&& req.headers["Transfer-Encoding"] == "chunked\r") {
-		setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
-	} else {
-		setenv("UPLOAD_CONTENT", getChunks(req.files["filename"]).c_str(), 1);
-	}
+	
+	if (req.headers.find("Transfer-Encoding") != req.headers.end()
+		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
+			setenv("UPLOAD_CONTENT", getChunks(req.files["body"]).c_str(), 1);
+			return "";
+		} else {
+			setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
+		}
 
 	string FILE_PATH = replacePath(req.url, config.getRequestPath(), config.getRoot());
 	vector<unsigned char> file = readRequestCGI(FILE_PATH);
