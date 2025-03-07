@@ -193,9 +193,9 @@ string getHandler(Request& req, ConfigLocation& config) {
 	if (!bonusstr.empty())
 		return bonusstr;
 	
-	string filePath = replacePath(req.url, config.getRequestPath(), config.getRoot());
+	string PATH_INFO = replacePath(req.url, config.getRequestPath(), config.getRoot());
 	
-	ifstream f((filePath).c_str());
+	ifstream f((PATH_INFO).c_str());
 
 	std::cout << "HERE 1" << std::endl;
 
@@ -253,7 +253,7 @@ string getHandler(Request& req, ConfigLocation& config) {
 	// getting cgi files
 	if (req.url.find("/cgi-bin") != std::string::npos) {
 		std::cout << "HERE 4" << std::endl;
-		vector<unsigned char> file = readRequestCGI(filePath);
+		vector<unsigned char> file = readRequestCGI(PATH_INFO);
 		if (file.empty()) {
 			return Response::ResBuilder()
 			.sc(SC404)
@@ -306,12 +306,17 @@ string getHandler(Request& req, ConfigLocation& config) {
 	return res;
 }
 
+string getChunks(string chunks) {
+	if (chunks.empty())
+		return "1";
+	return "";
+}
+
 // post handler is used to upload 1 file through the cgi script
 string postHandler(Request& req, ConfigLocation& config) {
-	
 	// reject other content types
 	if (req.headers["Content-Type"].find("multipart/form-data") == std::string::npos
-		|| req.url.find("/cgi-bin") == std::string::npos
+		|| req.url.find("/cgi-bin/save_file.py") == std::string::npos
 		|| req.files.empty()
 		|| req.formFields.empty()) {
 		return Response::ResBuilder()
@@ -322,10 +327,15 @@ string postHandler(Request& req, ConfigLocation& config) {
 	}
 
 	setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
-	setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
-	string filePath = replacePath(req.url, config.getRequestPath(), config.getRoot());
+	if (req.headers.find("Transfer-Encoding") == req.headers.end()
+		&& req.headers["Transfer-Encoding"] == "chunked\r") {
+		setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
+	} else {
+		setenv("UPLOAD_CONTENT", getChunks(req.files["filename"]).c_str(), 1);
+	}
 
-	vector<unsigned char> file = readRequestCGI(filePath);
+	string FILE_PATH = replacePath(req.url, config.getRequestPath(), config.getRoot());
+	vector<unsigned char> file = readRequestCGI(FILE_PATH);
 	std::cout << string(file.begin(), file.end()) << std::endl;
 	if (file.empty()) {
 		return Response::ResBuilder()
@@ -342,7 +352,7 @@ string postHandler(Request& req, ConfigLocation& config) {
 		->build()
 		.toString();
 	
-	res.insert(res.end(), file.begin(), file.end());
+	// res.insert(res.end(), file.begin(), file.end());
 	return res;
 }
 

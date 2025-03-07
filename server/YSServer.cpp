@@ -29,6 +29,9 @@ static void handle_client(int client_socket, string dir) {
 	buffer[bytes_received] = '\0';  // Null-terminate the buffer to make it a valid string
 	
     Request req = RequestParser::parseRequest(buffer);
+
+	string b(buffer);
+	std::cout << "BUFFER: " << b << std::endl;
 	
 	ConfigLocation configLocation;
 	//configLocation.populate("on", "index.html", "POST GET DELETE", "", "/", "./www");

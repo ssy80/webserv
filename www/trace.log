@@ -1,0 +1,69 @@
+== Info:   Trying 127.0.0.1:8080...
+== Info: Connected to localhost (127.0.0.1) port 8080 (#0)
+=> Send header, 207 bytes (0xcf)
+0000: POST /cgi-bin/save_file.py HTTP/1.1
+0025: Host: localhost:8080
+003b: User-Agent: curl/7.81.0
+0054: Accept: */*
+0061: Content-Length: 2767
+0077: Content-Type: multipart/form-data; boundary=--------------------
+00b7: ----9a1f76be8fc335c0
+00cd: 
+=> Send data, 2767 bytes (0xacf)
+0000: --------------------------9a1f76be8fc335c0
+002c: Content-Disposition: form-data; name="filename"; filename="index
+006c: .html"
+0074: Content-Type: text/html
+008d: 
+008f: <html lang="en">.<head>.    <meta charset="UTF-8">.    <meta nam
+00cf: e="viewport" content="width=device-width, initial-scale=1.0">.  
+010f:   <title>webserv</title>.    <style>.        body {.            
+014f: font-family: Arial, sans-serif;.            background-color: #f
+018f: 0f0f0;.            margin: 0;.            padding: 20px;.       
+01cf:  }.        header, footer {.            background-color: #333;.
+020f:             color: white;.            text-align: center;.      
+024f:       padding: 10px 0;.        }.        main {.            back
+028f: ground-color: white;.            padding: 20px;.            marg
+02cf: in: 20px 0;.            border-radius: 8px;.            box-shad
+030f: ow: 0 0 10px rgba(0, 0, 0, 0.1);.        }......center {.......d
+034f: isplay: block;.......margin-left: auto;.......margin-right: auto
+038f: ;.                        width: 25%;.                        he
+03cf: ight: 25%;.....}.    </style>.</head>.<body>.    <header>.      
+040f:   <h1>Welcome to Webserv</h1>.    </header>.    <main>.        <
+044f: div id="server-time">Loading server time...</div>.        <scrip
+048f: t>.            async function loadTime() {.                const
+04cf:  response = await fetch('/cgi-bin/time.py');.                if 
+050f: (!response.ok) throw new Error("Failed to load");.              
+054f:   const text = await response.text();.                document.g
+058f: etElementById('server-time').innerHTML = text;.            }.   
+05cf:          loadTime();.        </script>.    .        <div id="uni
+060f: x-time">Loading unix time...</div>.        <script>.            
+064f: async function loadUnixTime() {.                const response =
+068f:  await fetch('/cgi-bin/time2.cgi');.                if (!respons
+06cf: e.ok) throw new Error("Failed to load");.                const t
+070f: ext = await response.text();.                document.getElement
+074f: ById('unix-time').innerHTML = text;.            }.            lo
+078f: adUnixTime();.        </script>..        <img src="/cgi-bin/imag
+07cf: e.py" alt="image" class="center" />.        <img src="/images/ca
+080f: t.gif" alt="cat" class="center" />..        <form enctype="multi
+084f: part/form-data" action="/cgi-bin/save_file.py" method="post">.  
+088f:           <p>File: <input type="file" name="filename" required /
+08cf: ></p>.            <p><input type="submit" value="Upload File" />
+090f: </p>.        </form>.        <button onclick="deleteFiles()">Del
+094f: ete Files</button>.        <script>.            async function d
+098f: eleteFiles() {.                    const response = await fetch(
+09cf: "/www/index.html", {method: "DELETE"});.                    aler
+0a0f: t("successs");.            }.        </script>.    </main>.    <
+0a4f: footer>.        <p>&copy; 2025 webserv project</p>.    </footer>
+0a8f: .</body>.</html>
+0aa1: --------------------------9a1f76be8fc335c0--
+== Info: We are completely uploaded and fine
+== Info: Mark bundle as not supporting multiuse
+<= Recv header, 22 bytes (0x16)
+0000: HTTP/1.1 201 Created
+<= Recv header, 19 bytes (0x13)
+0000: Connection: close
+<= Recv header, 20 bytes (0x14)
+0000: Content-Length: 74
+== Info: transfer closed with 74 bytes remaining to read
+== Info: Closing connection 0

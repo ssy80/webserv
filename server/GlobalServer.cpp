@@ -523,6 +523,9 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
         return (resp);
     }
 
+    std::cout << "REQUEST STR: " << requestStr << std::endl;
+    std::cout << "REQ PRINT: " << std::endl;
+    req.print();
     
     if (req.method == "GET" && isContainIn(methods, "GET"))
         resp = getHandler(req, configLocation);
