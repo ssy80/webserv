@@ -32,13 +32,15 @@ WebServerConfig& WebServerConfig::operator=(const WebServerConfig& other)
     return (*this);
 }
 
+/* read config file into string, parse the globalStr to key/value in ConfigGlobal, 
+   parse each server string to ConfigServer obj */
 void WebServerConfig::parseWebServerConfigFile(std::string configFile)
 {
     std::string configFileStr;
-    configFileStr = readFile(configFile);                                          //read config file into string
+    configFileStr = readFile(configFile);
 
     std::string globalStr = extractBlock(configFileStr, "[global]", "[/global]");
-    this->configGlobal.parseConfigGlobal(globalStr);                               //parse the globalStr to key/value in ConfigGlobal
+    this->configGlobal.parseConfigGlobal(globalStr); 
 
     std::vector<std::string> configServerStrVec = extractBetweenBlockVec(configFileStr, "[server]", "[/server]");
     if (configServerStrVec.size() == 0)
@@ -51,7 +53,7 @@ void WebServerConfig::parseWebServerConfigFile(std::string configFile)
     for (it = configServerStrVec.begin(); it < configServerStrVec.end(); it++)    
     {
         ConfigServer configServer;
-        configServer.parseConfigServer(*it);                                      // parse each server string to ConfigServer obj 
+        configServer.parseConfigServer(*it);
         this->configServerVec.push_back(configServer);                            
     }
 
@@ -81,12 +83,12 @@ bool WebServerConfig::validate()
     return (true);    
 }
 
-ConfigGlobal WebServerConfig::getConfigGlobal()
+const ConfigGlobal& WebServerConfig::getConfigGlobal() const
 {
     return (this->configGlobal);
 }
 
-std::vector<ConfigServer> WebServerConfig::getConfigServerVec()
+const std::vector<ConfigServer>& WebServerConfig::getConfigServerVec() const
 {
     return (this->configServerVec);
 }
@@ -95,18 +97,12 @@ std::vector<int> WebServerConfig::getUniquePortsVec()
 {
     std::set<int> uniquePortsSet;
 
-    int port;
     std::vector<ConfigServer>::iterator it;
     for (it = this->configServerVec.begin(); it < this->configServerVec.end(); it++)
     {
-        port = std::atoi(((*it).getKeyValueMap())["listen"].c_str());
-        uniquePortsSet.insert(port);
+        uniquePortsSet.insert((*it).getListenPort());
     }
 
     std::vector<int> uniquePortsVec(uniquePortsSet.begin(), uniquePortsSet.end());
     return uniquePortsVec;
 }
-
-
-
-

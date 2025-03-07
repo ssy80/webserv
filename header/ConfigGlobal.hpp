@@ -33,12 +33,12 @@ class ConfigGlobal
         ConfigGlobal(const ConfigGlobal& other);
         ConfigGlobal& operator=(const ConfigGlobal& other);
 
-        std::map<std::string, std::string> getKeyValueMap();
+        const std::map<std::string, std::string>& getKeyValueMap() const;
         
         void parseConfigGlobal(std::string configGlobalStr);
 
-        int getTimeout();
-        int getMaxEvents();
+        const int& getTimeout() const;
+        const int& getMaxEvents() const;
 
 };
 

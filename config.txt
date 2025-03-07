@@ -1,7 +1,7 @@
 [global]
 
-    max_events = 100
-    timeout = 30000
+    max_events = 200
+    timeout = 20000
 
 [/global]
 
@@ -31,11 +31,27 @@
 [/location]
 
 [location]
+    request_path = /hello
+    root = ./www
+    index = index.html
+    autoindex = on
+    methods = GET
+[/location]
+
+[location]
     request_path = /upload
     root = ./www/upload
     index = index.html
     autoindex = on
     methods = POST GET DELETE
+[/location]
+
+[location]
+    request_path = /images
+    root = ./www/img
+    index = index.html
+    autoindex = on
+    methods = GET
 [/location]
 
 [location]
@@ -60,7 +76,7 @@
 [server]
 
     listen = 8888
-    server_name = localhost
+    server_name = localhost test.com
     max_body_size = 0
 
 [error_page]
@@ -75,10 +91,43 @@
 
 [location]
     request_path = /
-    root = ./www
+    root = ./www2
     index = index.html
     autoindex = on
     methods = GET
+[/location]
+
+[location]
+    request_path = /images
+    root = ./www2/images
+    index = index.html
+    autoindex = on
+    methods = GET
+[/location]
+
+[location]
+    request_path = /upload
+    root = ./www2/upload
+    index = index.html
+    autoindex = on
+    methods = POST GET DELETE
+[/location]
+
+[location]
+    request_path = /cgi-bin
+    root = ./www2/cgi
+    index = index.html
+    autoindex = on    
+    methods = POST GET
+[/location]
+
+[location]
+    request_path = /old
+    root = ./www2/old
+    index = index.html
+    autoindex = on
+    methods = GET
+    redirect = http://localhost:8888
 [/location]
 
 [/server]

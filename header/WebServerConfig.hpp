@@ -24,7 +24,6 @@
 # include <set>
 
 
-using std::string;
 
 class WebServerConfig
 {
@@ -32,8 +31,8 @@ class WebServerConfig
         ConfigGlobal configGlobal;
         std::vector<ConfigServer> configServerVec;
 
-        string getGlobalStr(string configStr);
-        std::vector<string> getServerStr(string configFileStr);
+        std::string getGlobalStr(std::string configStr);
+        std::vector<std::string> getServerStr(std::string configFileStr);
         bool validate();
 
     public:
@@ -42,10 +41,11 @@ class WebServerConfig
         WebServerConfig(const WebServerConfig& other);
         WebServerConfig& operator=(const WebServerConfig& other);
 
-        ConfigGlobal getConfigGlobal();
-        std::vector<ConfigServer> getConfigServerVec();
+        const ConfigGlobal& getConfigGlobal() const;
+        const std::vector<ConfigServer>& getConfigServerVec() const;
+
         std::vector<int> getUniquePortsVec();
-        void parseWebServerConfigFile(string configFile);
+        void parseWebServerConfigFile(std::string configFile);
 };
 
 

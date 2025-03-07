@@ -37,30 +37,27 @@ class ConfigLocation
         ConfigLocation(const ConfigLocation& other);
         ConfigLocation& operator=(const ConfigLocation& other);
 
-        std::map<std::string, std::string> getKeyValueMap();
+        const std::map<std::string, std::string>& getKeyValueMap() const;
 
         void parseConfigLocation(std::string configStr);
-        //void setKeyValueMap(std::map<std::string, std::string> _keyValueMap);
-
 
         const std::string& getRequestPath() const;
-        std::string getRoot();
-        std::string getIndex();
-        std::string getAutoIndex();
-        std::string getMethods();
-        std::string getRedirect();
         
-        void populate(std::string Autoindex, std::string Index, std::string Methods, std::string Redirect, std::string Request_path, std::string Root) {
+        const std::string& getRoot() const;
+        const std::string& getIndex() const;
+        const std::string& getAutoIndex() const;
+        const std::string& getMethods() const;
+        const std::string& getRedirect() const;
+        
+        /*void populate(std::string Autoindex, std::string Index, std::string Methods, std::string Redirect, std::string Request_path, std::string Root) 
+        {
             autoindex = Autoindex;
             index = Index;
             methods = Methods;
             redirect = Redirect;
             request_path = Request_path;
             root = Root;
-        }
-        
-
-    
+        }*/
 };
 
 #endif

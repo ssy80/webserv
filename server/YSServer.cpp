@@ -31,7 +31,7 @@ static void handle_client(int client_socket, string dir) {
     Request req = RequestParser::parseRequest(buffer);
 	
 	ConfigLocation configLocation;
-	configLocation.populate("on", "index.html", "POST GET DELETE", "", "/", "./www");
+	//configLocation.populate("on", "index.html", "POST GET DELETE", "", "/", "./www");
 
 	std::string resp;
 

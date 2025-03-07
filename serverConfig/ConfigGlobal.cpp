@@ -72,6 +72,11 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
             std::cerr << "Error: invalid max_events" << std::endl;
             exit(1);
         }
+        if (this->max_events <= 0)
+        {
+            std::cerr << "Error: invalid max_events" << std::endl;
+            exit(1);
+        }
     }
     else
     {
@@ -80,17 +85,17 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
     }
 }
 
-std::map<std::string, std::string> ConfigGlobal::getKeyValueMap()
+const std::map<std::string, std::string>& ConfigGlobal::getKeyValueMap() const
 {
     return (this->keyValueMap);
 }
 
-int ConfigGlobal::getTimeout()
+const int& ConfigGlobal::getTimeout() const
 {
     return (this->timeout);
 }
 
-int ConfigGlobal::getMaxEvents()
+const int& ConfigGlobal::getMaxEvents() const
 {
     return (this->max_events);
 }

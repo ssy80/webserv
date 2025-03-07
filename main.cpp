@@ -12,7 +12,7 @@
 
 #include "header/WebServerConfig.hpp"
 #include "header/GlobalServer.hpp"
-#include "header/YSServer.hpp"
+//#include "header/YSServer.hpp"
 
 
 void displayParseConfig(WebServerConfig webServerConfig)
@@ -20,14 +20,14 @@ void displayParseConfig(WebServerConfig webServerConfig)
     ConfigGlobal configGlobal = webServerConfig.getConfigGlobal();                                        //object for [global] [/global] 
     std::vector<ConfigServer> configServerVec = webServerConfig.getConfigServerVec();                     //objects for [server] [/server] in vector 
     
-    cout << "[global]" << endl;
+    std::cout << "[global]" << endl;
     printMap(configGlobal.getKeyValueMap());                                                             // key/value map for [global] [/global] 
-    cout << endl;
+    std::cout << endl;
     
     std::vector<ConfigServer>::iterator it;
     for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                 //loop server vector 
     {
-        cout << "[server]" << endl;                                                           
+        std::cout << "[server]" << endl;                                                           
         ConfigServer configServer = (*it);                                                               // get the sever object
         //printMap(configServer.getKeyValueMap());                                                        // get key/value for each server
         std::cout << "listen:" << configServer.getListenPort() << std::endl;
@@ -43,7 +43,7 @@ void displayParseConfig(WebServerConfig webServerConfig)
         std::vector<ConfigLocation>::iterator locationIt;
         for (locationIt = configLocationVec.begin(); locationIt <  configLocationVec.end(); locationIt++)
         {
-            cout << "[location]" << endl;
+            std::cout << "[location]" << endl;
             ConfigLocation configLocation = (*locationIt);
             //printMap(configLocation.getKeyValueMap());                                                    //key/value for each [location]
             std::cout << "autoindex:" << configLocation.getAutoIndex() << std::endl;

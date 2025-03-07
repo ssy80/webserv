@@ -33,7 +33,6 @@ class ConfigServer
         std::string server_name;
         int max_body_size;
         std::map<std::string, std::string> errorPageMap;
-
         std::map<std::string, std::string> defaultErrorPageMap;
         
         bool validate();
@@ -46,16 +45,17 @@ class ConfigServer
         ConfigServer(const ConfigServer& other);
         ConfigServer& operator=(const ConfigServer& other);
 
-        std::map<std::string, std::string> getKeyValueMap();
-        std::vector<ConfigLocation>  getConfigLocationVec();
-        
         void parseConfigServer(std::string configServerStr);
 
-        int getListenPort();
-        std::string getServerName();
-        int getMaxBodySize();
-        std::map<std::string, std::string> getErrorPageMap();
-        std::map<std::string, std::string> getDefaultErrorPageMap();
+        const std::map<std::string, std::string>& getKeyValueMap() const;
+        const std::vector<ConfigLocation>&  getConfigLocationVec() const;
+
+        const std::string& getServerName() const;
+        const int& getListenPort() const;
+        const int& getMaxBodySize() const;
+
+        const std::map<std::string, std::string>& getErrorPageMap() const;
+        const std::map<std::string, std::string>& getDefaultErrorPageMap() const;
         
         
 

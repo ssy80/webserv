@@ -106,7 +106,6 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
         }
     }
     
-
     //parse configLocation
     std::vector<std::string>::iterator it;
     for (it = configLocationStrVec.begin(); it < configLocationStrVec.end(); it++)
@@ -124,11 +123,12 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
     }
 }
 
+/* check location must have at least one / root location  */
 bool ConfigServer::validate()
 {
     if (this->listen == -1 || this->max_body_size == -1)
         return (false);
-    //location must have / root location  
+   
     std::vector<ConfigLocation>::iterator it;
     for (it = this->configLocationVec.begin(); it < this->configLocationVec.end(); it++)
     {
@@ -140,44 +140,42 @@ bool ConfigServer::validate()
     return (false);
 }
 
-
-
-int ConfigServer::getListenPort()
+const int& ConfigServer::getListenPort() const
 {
     return(this->listen);
 }
 
-std::string ConfigServer::getServerName()
+const std::string& ConfigServer::getServerName() const
 {
     return (this->server_name);
 }
 
-int ConfigServer::getMaxBodySize()
+const int& ConfigServer::getMaxBodySize() const
 {
     return (this->max_body_size);
 }
 
-std::map<std::string, std::string> ConfigServer::getErrorPageMap()
+const std::map<std::string, std::string>& ConfigServer::getErrorPageMap() const
 {
     return (this->errorPageMap);
 }
         
-std::map<std::string, std::string> ConfigServer::getDefaultErrorPageMap()
+const std::map<std::string, std::string>& ConfigServer::getDefaultErrorPageMap() const
 {
     return (this->defaultErrorPageMap);
 }
 
-std::map<std::string, std::string> ConfigServer::getKeyValueMap()
+const std::map<std::string, std::string>& ConfigServer::getKeyValueMap() const
 {
     return (this->keyValueMap);
 }
 
-std::vector<ConfigLocation> ConfigServer::getConfigLocationVec()
+const std::vector<ConfigLocation>& ConfigServer::getConfigLocationVec() const
 {
     return (this->configLocationVec);
 }
 
-//read default config file first [server] [error_page]
+/* read default config file first [server] [error_page] */
 void ConfigServer::populateDefaultErrorPageMap()
 {
     std::string configFileStr;
@@ -185,7 +183,6 @@ void ConfigServer::populateDefaultErrorPageMap()
 
     std::string serverStr = extractBlock(configFileStr, "[server]", "[/server]");
 
-    //get errorPage block
     std::string errorPageStr = extractBlock(serverStr, "[error_page]", "[/error_page]");
     this->defaultErrorPageMap = extractKeyValuePair(errorPageStr);
 }

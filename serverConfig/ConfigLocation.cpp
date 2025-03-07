@@ -78,12 +78,14 @@ void ConfigLocation::parseConfigLocation(std::string configLocationStr)
 
 bool ConfigLocation::validate()
 {
-    if (this->request_path == "" || this->root == "" || this->index == "" || this->autoindex == "" || this->methods == "")
+    if (this->autoindex != "on" && this->autoindex != "off")
+        return (false);
+    if (this->request_path == "" || this->root == "" || this->index == "" || this->methods == "")
         return (false);
     return (true);
 }
 
-std::map<std::string, std::string> ConfigLocation::getKeyValueMap()
+const std::map<std::string, std::string>& ConfigLocation::getKeyValueMap() const
 {
     return (this->keyValueMap);
 }
@@ -93,27 +95,27 @@ const std::string& ConfigLocation::getRequestPath() const
     return (this->request_path);
 }
 
-std::string ConfigLocation::getRoot()
+const std::string& ConfigLocation::getRoot() const
 {
     return (this->root);
 }
 
-std::string ConfigLocation::getIndex()
+const std::string& ConfigLocation::getIndex() const
 {
     return (this->index);
 }
 
-std::string ConfigLocation::getAutoIndex()
+const std::string& ConfigLocation::getAutoIndex() const
 {
     return (this->autoindex);
 }
 
-std::string ConfigLocation::getMethods()
+const std::string& ConfigLocation::getMethods() const
 {
     return (this->methods);   
 }
 
-std::string ConfigLocation::getRedirect()
+const std::string& ConfigLocation::getRedirect() const
 {
     return (this->redirect);   
 }

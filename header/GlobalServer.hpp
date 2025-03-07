@@ -41,30 +41,22 @@
 class GlobalServer : public AServer
 {
     private:
-
-        // Structure to hold per-connection data.
         struct Connection 
         {
-            int fd;                     // Client socket file descriptor.
-            std::string buffer;         // Buffer to accumulate received data.
-            long lastActive;  // Last activity time in ms.
-            std::string responseBuffer; // Stores the response to be sent.
-            size_t bytesSent;       // Tracks how many bytes have been sent.
+            int fd;                    
+            std::string buffer; 
+            long lastActive;
+            std::string responseBuffer;
+            size_t bytesSent;
         };
-
-        // Global map to track connections by file descriptor.
         std::map<int, Connection*> connections;
-
-        // Global epoll file descriptor.
         int epoll_fd;
+        
         std::vector<int> listenFdsVec;          
-
         WebServerConfig webServerConfig;
 
         int setNonBlocking(int fd);
         int createAndBind(int port);
-
-        //int stringToInt(const std::string& str);
 
         void removeConnection(Connection* conn);
         void addConnection(int client_fd) ;
@@ -73,8 +65,6 @@ class GlobalServer : public AServer
         ConfigServer parseConfigServer(std::string requestStr);
 
         std::string handleRequest(std::string& requestStr);
-
-        //bool compareConfigLocationDescending(const ConfigLocation& a, const ConfigLocation& b);
 
         void createEpoll();
         void startListeningPort(std::vector<int> uniquePortsVec);
@@ -89,16 +79,6 @@ class GlobalServer : public AServer
 
         void startServer();
 
-        
-
-
-
-        
-        /*class InvalidStrToIntException: public std::exception
-        {
-            public:
-                const char* what(void) const throw();
-        };*/
 };
 
 

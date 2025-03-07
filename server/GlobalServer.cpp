@@ -10,8 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "../header/GlobalServer.hpp"
-#include "../header/ResHelper.hpp"
-#include <iostream>
+
 
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
 
@@ -28,23 +27,25 @@ GlobalServer& GlobalServer::operator=(const GlobalServer& other)
     return (*this);
 }
 
-
+/* set flags to non blocking makes I/O operations on the file descriptor non-blocking, 
+   meaning functions like read() and write() will return immediately rather than 
+   waiting for the operation to complete*/
 int GlobalServer::setNonBlocking(int fd)
 {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1) 
     {
         std::cerr << "Error: fcntl F_GETFL" << std::endl;
-        exit(1);
+        return (-1); //exit(1);
     }
 
-    flags |= O_NONBLOCK;                                    //set flags to non blocking makes I/O operations on the file descriptor non-blocking, meaning functions like read() and write() will return immediately rather than waiting for the operation to complet
+    flags |= O_NONBLOCK;
     if (fcntl(fd, F_SETFL, flags) == -1) 
     {
         std::cerr << "Error: fcntl F_SETFL" << std::endl; 
-        exit(1);
+        return (-1); //exit(1);
     }
-    return 0;
+    return (0);
 }
 
 int GlobalServer::createAndBind(int port)
@@ -114,13 +115,13 @@ void GlobalServer::startListeningPort(std::vector<int> uniquePortsVec)
             exit(1);
         }
         else
-            this->listenFdsVec.push_back(sockfd);                                                  //add to listen 
+            this->listenFdsVec.push_back(sockfd);                                           //add to listen 
 
-        struct epoll_event event;                                                           // For listening sockets, we can simply store the fd in epoll_event.data.fd.
+        struct epoll_event event;                                                           
         memset(&event, 0, sizeof(event));
 
         event.events = EPOLLET | EPOLLIN;
-        event.data.fd = sockfd;
+        event.data.fd = sockfd;                                                             // For listening sockets, we can simply store the fd in epoll_event.data.fd.
         if (epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, sockfd, &event) < 0) 
         {
             std::cerr << "Error: epoll_ctl add listen socket" << std::endl; 
@@ -195,21 +196,18 @@ void GlobalServer::startServer()
                 }
             }
 
-            if (isListen)                                                      //event from listening socket, do accept new client connection 
+            if (isListen)                                                      //event from listening socket, accept new client connection 
             {
                 while (true) 
                 {
                     struct sockaddr_in clientAddr;
                     socklen_t clientLen = sizeof(clientAddr);
                     int clientFd = accept(fd, (struct sockaddr *)&clientAddr, &clientLen);
-                    if (clientFd < 0) 
+                    if (clientFd < 0)                                                       // No more connections.
                     {
-                        //if (errno == EAGAIN || errno == EWOULDBLOCK)               // No more connections.
-                        //    break;
-                        //std::cerr << "Error: accept connection" << std::endl; 
                         break;
                     }
-                    if (setNonBlocking(clientFd) < 0) 
+                    if (setNonBlocking(clientFd) < 0)
                     {
                         close(clientFd);
                         continue;
@@ -217,37 +215,33 @@ void GlobalServer::startServer()
                     addConnection(clientFd);
                 }
             }  
-            else                                              //process event from a client fd, recv data from client
+            else                                                                          //process event from a client fd
             {
                 Connection* conn = static_cast<Connection*>(events[i].data.ptr);
                 bool closeConn = false;
                 conn->lastActive = getCurrentTimeMs();
 
-                if (ev & EPOLLIN)                               //reading
+                if (ev & EPOLLIN)                                                         //reading
                 { 
                     int count;
                     while (true)                                                 
                     {
                         memset(buffer, 0, READ_BUFFER);
                         count = recv(conn->fd, buffer, sizeof(buffer), 0);
-                        if (count > 0) 
+                        if (count > 0)                                                    // data read
                         {
                             conn->buffer.append(buffer, count);
                         } 
-                        else if (count == 0)                                    // client closed connection
+                        else if (count == 0)                                              // client closed connection
                         {
                             closeConn = true;
                             removeConnection(conn);
                             break;
                         } 
-                        else if (count == -1)
+                        else if (count == -1)                                   // no more data, break out recv loop, wait for next read event
                         {
-                            //if (errno == EAGAIN || errno == EWOULDBLOCK)         // no more data, stop recv
+                            //if (errno == EAGAIN || errno == EWOULDBLOCK)      // no more data, stop recv
                             //    break; 
-                            //std::cerr << "Error: recv" << std::endl;            //other error when recv, close 
-                            //closeConn = true;
-                            //closeConn = true;           //added 
-                            //removeConnection(conn);     //added
                             break;
                         }
                     }
@@ -255,20 +249,14 @@ void GlobalServer::startServer()
                     if (closeConn)
                         break;
 
-                    size_t headerEnd = conn->buffer.find("\r\n\r\n");         //check got received complete header
-                    if (headerEnd == std::string::npos)                       //header incomplete; wait for next EPOLLIN event.
+                    size_t headerEnd = conn->buffer.find("\r\n\r\n");                     //check got received complete header
+                    if (headerEnd == std::string::npos)                                   //header incomplete; wait for next EPOLLIN event.
                         break;
 
-                    ConfigServer configServer = parseConfigServer(conn->buffer);         //get correct serve according to config
+                    ConfigServer configServer = parseConfigServer(conn->buffer);         //get correct server according to config
                     int contentLength = parseContentLength(conn->buffer);                // Parse Content-Length from header
-                    /*if (contentLength < 0) 
-                    {
-                        std::cerr << "Info: no Content-Length" << std::endl;
-                            //        removeConnection(conn);
-                            //        continue;
-                    }*/
-                    //std::cout << "parse Content-Length: " <<  contentLength  << std::endl;
-                    size_t total_expected = headerEnd + 4 + contentLength;              // Calculate expected total length: headers + CRLF CRLF + body.
+
+                    size_t total_expected = headerEnd + 4 + contentLength;               // Calculate expected total length: headers + CRLF CRLF + body.
                     bool isMaxBodySize = false;
                     if(configServer.getMaxBodySize() > 0 && contentLength > configServer.getMaxBodySize())
                     {
@@ -280,12 +268,9 @@ void GlobalServer::startServer()
                     }
                     else
                     { 
-                        if (conn->buffer.size() < total_expected)                           //Full request (headers + body) hasn't been received yet // The partial data remains in conn->buffer; wait for more data.
+                        if (conn->buffer.size() < total_expected)                           //Full request (headers + body) not received yet, partial data remains in conn->buffer, wait for more data.
                             break;
-                    }                                                      
-                        
-                    //process request here
-                    // std::cerr << "request_content: " << std::endl << conn->buffer << std::endl;      //come to here, means all recv
+                    }                                                  
 
                     if (isMaxBodySize)
                     {
@@ -296,8 +281,6 @@ void GlobalServer::startServer()
                     else
                     {
                         conn->responseBuffer = handleRequest(conn->buffer);
-                        
-                    //std::cerr << "1conn->responseBuffer.size(): " << conn->responseBuffer.size() << std::endl;
                         
                         if (conn->responseBuffer.empty())
                         {
@@ -311,7 +294,7 @@ void GlobalServer::startServer()
                     struct epoll_event event;
                     memset(&event, 0, sizeof(event));
                     event.data.ptr = conn;
-                    event.events = EPOLLOUT;                           //modify to wait for write event.
+                    event.events = EPOLLOUT;                                                //modify to wait for write event.
                     if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
                     {
                         std::cerr << "Error: epoll_ctl mod EPOLLOUT" << std::endl;
@@ -334,14 +317,13 @@ void GlobalServer::startServer()
                             conn->bytesSent += n;
                             std::cerr << "--bytes_sent--: " << conn->bytesSent << std::endl;
                         }
-                        else if(n == 0)        //client close   //added 
+                        else if(n == 0)                                                        //client close
                         {
                             removeConnection(conn);
                             break;
                         }
-                        else if (n == -1)  //added 
+                        else if (n == -1)                                                    //Cannot send more now; break and wait for next EPOLLOUT.
                         {
-                            removeConnection(conn);
                             break;
                         }
                         /*else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) 
@@ -349,36 +331,11 @@ void GlobalServer::startServer()
                             // Cannot send more now; break and wait for next EPOLLOUT.
                             break;
                         } */
-                        else 
-                        {
-                            //std::cerr << "Error: send" << std::endl;
-                            //closeConn = true;
-                            /*if (errno == EPIPE || errno == ECONNRESET) 
-                            {
-                                removeConnection(conn); 
-                                break;
-                            }*/
-                            removeConnection(conn);   ///added 
-                            break;
-                        }
                     }
 
-                    if (conn->bytesSent == conn->responseBuffer.size())                   // If the entire response is sent, remove EPOLLOUT.
+                    if (conn->bytesSent == conn->responseBuffer.size())                   // If the entire response is sent, remove connection
                     {
-                        //conn->responseBuffer.clear(); 
-                        //conn->bytesSent = 0;
-                        
-                        // Modify epoll event to remove EPOLLOUT.
-                        /*struct epoll_event event;
-                        memset(&event, 0, sizeof(event));
-                        event.data.ptr = conn;
-                        event.events = EPOLLET | EPOLLIN;
-                        if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
-                        {
-                            std::cerr << "Error: epoll_ctl mod to remove EPOLLOUT" << std::endl;
-                            //closeConn = true;
-                        }*/
-                        removeConnection(conn);                // Close connection after response.
+                        removeConnection(conn);
                     }
                 }
             }   
@@ -394,7 +351,7 @@ void GlobalServer::startServer()
 }
 
 
-// Add a new client connection to epoll and store its context.
+/* Add a new client connection to epoll and store its context.*/
 void GlobalServer::addConnection(int client_fd) 
 {
     Connection* conn = new Connection;
@@ -416,7 +373,7 @@ void GlobalServer::addConnection(int client_fd)
     }
 }
 
-// Remove a connection from epoll, close its socket, and free its context.
+/* Remove a connection from epoll, close its socket.*/
 void GlobalServer::removeConnection(Connection* conn)
 {
     if (epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL) < 0) 
@@ -456,7 +413,6 @@ ConfigServer GlobalServer::parseConfigServer(std::string requestStr)
         if (isContainIn(configServer.getServerName(), server_name))
         {
             isServerNameMatch = true;
-            //std::cout << "isServerNameMatch " << isServerNameMatch << std::endl;
             break;                           
         }
     }
@@ -479,19 +435,27 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
     std::map<std::string, std::string> errorPageMap = configServer.getErrorPageMap();
     std::string filePath;
     std::map<std::string, std::string>::iterator it;
+    std::string statusCode;
 
-    it = errorPageMap.find(errorCode);
+    it = errorPageMap.find(errorCode);                         //find error page
     if (it != errorPageMap.end())
     {
-       filePath = it->second;
+        filePath = it->second;
+        if (errorCode == "501")
+            statusCode = "501 Not Implemented";
+        else if (errorCode == "413")
+            statusCode = "413 Content Too Large";
+        else if (errorCode == "404")
+            statusCode = "404 Not Found";
     }
-    else
+    else                                                      //cannot find error page, send default error page 404
     {
         std::map<std::string, std::string> defaultErrorPageMap = configServer.getDefaultErrorPageMap();
-        it = defaultErrorPageMap.find(errorCode);
+        it = defaultErrorPageMap.find("404");
         if (it != defaultErrorPageMap.end())
         {
             filePath = it->second;
+            statusCode = "404 Not Found";
         }
     }
 
@@ -499,7 +463,7 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
     std::string output; 
     std::string file = readServerFile(filePath);
     Response res = Response::ResBuilder()
-									.sc(SC413)
+									.sc(statusCode)
                                     ->ct(MIME::KEY + MIME::HTML)
 									->mc("Connection:", "close")
 									->cl(file.size())
@@ -511,23 +475,22 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
 
 std::string GlobalServer::handleRequest(std::string& requestStr)
 {
-    //match location
+    //match server
     ConfigServer configServer = parseConfigServer(requestStr);
     std::vector<ConfigLocation> configLocationVec = configServer.getConfigLocationVec();
 
-    // Sort the vector in descending order using the comparator function.
-    std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);
+    std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);                  // Sort the vector in descending order using the comparator function.
 
     Request req = RequestParser::parseRequest(requestStr);
 
     ConfigLocation configLocation;
     std::vector<ConfigLocation>::iterator it;
-    for (it = configLocationVec.begin(); it < configLocationVec.end(); it++)
+    for (it = configLocationVec.begin(); it < configLocationVec.end(); it++)                                        //get [location] params matching the request_path
     {
         configLocation = (*it);
         std::string requestPath = configLocation.getRequestPath();
 
-        if (req.url.rfind(requestPath, 0) == 0) // pos=0 limits the search to the prefix
+        if (req.url.rfind(requestPath, 0) == 0)
         { 
             break;
         }
@@ -539,9 +502,8 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::string autoindex = configLocation.getAutoIndex();
     std::string methods = configLocation.getMethods();
     std::string redirect = configLocation.getRedirect();
-
-    std::string filePath = replacePath(req.url, requestPath, root);
-    std::cout << "filePath: " << filePath << std::endl;  
+    std::string filePath = replacePath(req.url, requestPath, root);            //map request_path to root in [location]
+    std::cout << "filePath: " << filePath << std::endl; 
 
     std::string resp;
 
