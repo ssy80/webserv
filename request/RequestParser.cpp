@@ -28,6 +28,9 @@ Request RequestParser::parseRequest(const string& rawRequest) {
   // If Content-Type is multipart/form-data, parse the body accordingly
   if (!contentType.empty() && contentType.find("multipart/form-data") != string::npos)
     parseMultipartFormData(stream, request, contentType);
+  // parse body part
+  while (getline(stream, line))
+    request.files["body"] += line;
 	return request;
 }
 
