@@ -54,6 +54,8 @@ std::string readFile(std::string configFile);
 
 std::vector<std::string> splitHost(std::string hostStr);
 
+bool isValidHostPort(std::string hostStr);
+
 bool isContainIn(std::string line, std::string findStr);
 
 std::string replacePath(const std::string& url, const std::string& requestPath, const std::string& root);
@@ -61,6 +63,8 @@ std::string replacePath(const std::string& url, const std::string& requestPath, 
 std::string readServerFile(const std::string& filePath);
 
 long getCurrentTimeMs();
+
+std::string getDirectoryPath(const std::string& filePath);
 
 class InvalidStrToIntException: public std::exception
 {

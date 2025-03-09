@@ -39,6 +39,7 @@ void printVecStr(std::vector<std::string> vecStr)
     } 
 }
 
+/* remove block[location] [/location]*/
 std::string removeBlock(std::string configStr, std::string startMarker, std::string endMarker)
 {
     size_t startPos = configStr.find(startMarker);
@@ -164,13 +165,10 @@ int parseContentLength(const std::string& request)
 {
     std::string header = "Content-Length:";
     size_t pos = request.find(header);
-    if (pos == std::string::npos)                                                   // Header not found.
-    {
-        return -1;                                                  
-    }
+    if (pos == std::string::npos)                                                   // Header field "Content-Length:" not found.
+        return (0);                                                  
     
     pos += header.size();                                                           // Move position past "Content-Length:".
-    
     
     while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))  // Skip any whitespace after the header.
     {
@@ -183,21 +181,23 @@ int parseContentLength(const std::string& request)
         end = request.size();
     }
     
-    std::string valueStr = request.substr(pos, end - pos);                  // Extract the substring containing the numeric value.
-    int contentLength = std::atoi(valueStr.c_str());                        // Convert the string to an integer.
+    std::string valueStr = request.substr(pos, end - pos);                         // Extract the substring containing the numeric value.
+    if (!isValidInt(valueStr))
+        return (0);
+
+    int contentLength = std::atoi(valueStr.c_str());                               // Convert the string to an integer.
     return contentLength;
 }
 
 std::string parseHeaderField(const std::string& request, std::string field)
 {
-    //std::string header = field; //"Content-Length:";
     size_t pos = request.find(field);
     if (pos == std::string::npos)                                                   // Header not found.
     {
         return "";                                                 
     }
     
-    pos += field.size();                                                           // Move position past "Content-Length:".
+    pos += field.size();                                                           // Move position past field = "Content-Length:".
     
     
     while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))  // Skip any whitespace after the header.
@@ -211,9 +211,7 @@ std::string parseHeaderField(const std::string& request, std::string field)
         end = request.size();
     }
     
-    std::string valueStr = request.substr(pos, end - pos);                  // Extract the substring containing the numeric value.
-    //int contentLength = std::atoi(valueStr.c_str());                        // Convert the string to an integer.
-    //return contentLength;
+    std::string valueStr = request.substr(pos, end - pos);                         // Extract the substring containing the numeric value.
     return (valueStr);
 }
 
@@ -261,7 +259,7 @@ bool isValidPort(std::string portStr)
         return (false);
 }
 
-// int must >= 0
+// int must >= 0 <=int_max
 bool isValidInt(std::string valueStr)
 {
     try 
@@ -320,14 +318,28 @@ std::vector<std::string> splitHost(std::string hostStr)
     std::string::size_type pos;
     
     pos = hostStr.find(':', start);
-    while (pos != std::string::npos) // Loop until no more ':' characters are found
+    while (pos != std::string::npos)                                      // Loop until no more ':' characters are found
     {
         hostVec.push_back(trim(hostStr.substr(start, pos - start)));
         start = pos + 1;
         pos = hostStr.find(':', start);
     }
-    hostVec.push_back(trim(hostStr.substr(start)));                     // Add the final token after the last ':'
+    hostVec.push_back(trim(hostStr.substr(start)));                        // Add the final token after the last ':'
     return (hostVec);
+}
+
+/* check hostStr contain : , host:port, e.g localhost:8080*/
+bool isValidHostPort(std::string hostStr)
+{
+    std::string::size_type start = 0;
+    std::string::size_type pos;
+
+    pos = hostStr.find(':', start);
+    if (pos == std::string::npos)                                           //no have ':'
+    {
+        return (false);
+    }  
+    return (true);
 }
 
 /*line = "hello.com localhost example.com" findStr="localhost"*/
@@ -347,20 +359,19 @@ bool isContainIn(std::string line, std::string findStr)
 }
 
 
-// Check if the URL begins with the requestPath
+// Check if the URL begins with the requestPath and remove the requestPath portion from the URL and append the rest to the root.
 std::string replacePath(const std::string& url, const std::string& requestPath, const std::string& root) 
 {
     if (url.compare(0, requestPath.size(), requestPath) == 0) 
     {
-        if (url.substr(requestPath.size()).find("/") == 0)
+        if (url.substr(requestPath.size()).find("/") == 0)                 //starts with "/"
         {
             return (root + url.substr(requestPath.size())); 
         }
         else
         {
-            return (root + "/" + url.substr(requestPath.size()));          // Remove the requestPath portion from the URL and append the rest to the root.
+            return (root + "/" + url.substr(requestPath.size()));          // add "/"
         }
-        
     }
     return (url);                                          
 }
@@ -369,7 +380,7 @@ std::string replacePath(const std::string& url, const std::string& requestPath, 
 std::string readServerFile(const std::string& filePath) 
 {
     std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
-    if (!file)                                                          // Handle error appropriately. Here we simply return an empty string.
+    if (!file)
     {
         return "";
     }
@@ -379,10 +390,21 @@ std::string readServerFile(const std::string& filePath)
 }
 
 
-// Helper function to get current time in milliseconds.
+/* get current time in milliseconds.*/
 long getCurrentTimeMs() 
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (long)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+
+std::string getDirectoryPath(const std::string& filePath) 
+{
+    std::size_t found = filePath.find_last_of("/"); 
+    if (found != std::string::npos) 
+    {
+        return filePath.substr(0, found + 1);
+    }
+    return "";
 }

@@ -409,36 +409,43 @@ void GlobalServer::removeConnection(Connection* conn)
 /*assign first server with the listen port to handle request if no matching servername found*/
 ConfigServer GlobalServer::parseConfigServer(std::string requestStr)
 {
+    ConfigServer configServer;
     std::string hostStr = parseHeaderField(requestStr, "Host:");
+    
+    if (!isValidHostPort(hostStr))
+        return (configServer);
+
     std::vector<std::string> hostVec = splitHost(hostStr);
     std::string server_name = hostVec[0];
+
+    if (!isValidPort(hostVec[1].c_str()))
+        return (configServer);
+
     int listenPort = std::atoi(hostVec[1].c_str());
     
     std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec();
-    ConfigServer configServer;
 
     std::vector<ConfigServer>::iterator it;
-    for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                
+    for (it = configServerVec.begin(); it < configServerVec.end(); )                                
     {                                                  
-        configServer = (*it);
-        if (configServer.getListenPort() != listenPort)
-        {
-            configServerVec.erase(it);
-        }
+        if ((*it).getListenPort() != listenPort)
+            it = configServerVec.erase(it);
+        else
+            it++;
     }
 
     bool isServerNameMatch = false;
     for (it = configServerVec.begin(); it < configServerVec.end(); it++)                                
     {                                                  
-        configServer = (*it);
-        if (isContainIn(configServer.getServerName(), server_name))
+        if (isContainIn((*it).getServerName(), server_name))
         {
             isServerNameMatch = true;
+            configServer = (*it);
             break;                           
         }
     }
 
-    if (!isServerNameMatch)                      
+    if (!isServerNameMatch && configServerVec.size() != 0)                      
         configServer = configServerVec[0];
 
     return (configServer);
@@ -454,7 +461,7 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
     //match server
     ConfigServer configServer = parseConfigServer(requestStr);
     std::map<std::string, std::string> errorPageMap = configServer.getErrorPageMap();
-    std::string filePath;
+    std::string filePath = "";
     std::map<std::string, std::string>::iterator it;
     std::string statusCode;
 
@@ -468,8 +475,17 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
             statusCode = "413 Content Too Large";
         else if (errorCode == "404")
             statusCode = "404 Not Found";
+        else if (errorCode == "400")
+            statusCode = "400 Bad Request";
     }
-    else                                                      //cannot find error page, send default error page 404
+
+    if (filePath != "")
+    {
+        if (readServerFile(filePath) == "")                  //file not found
+            filePath = "";
+    }
+                                    
+    if (filePath == "")                                      //cannot find error page, send default error page 404
     {
         std::map<std::string, std::string> defaultErrorPageMap = configServer.getDefaultErrorPageMap();
         it = defaultErrorPageMap.find("404");
@@ -503,6 +519,8 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);                  // Sort the vector in descending order using the comparator function.
 
     Request req = RequestParser::parseRequest(requestStr);
+    
+    std::string urlDirPath = getDirectoryPath(req.url);
 
     ConfigLocation configLocation;
     std::vector<ConfigLocation>::iterator it;
@@ -511,10 +529,8 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
         configLocation = (*it);
         std::string requestPath = configLocation.getRequestPath();
 
-        if (req.url.rfind(requestPath, 0) == 0)
-        { 
+        if (urlDirPath.rfind(requestPath, 0) == 0)
             break;
-        }
     }
 
     std::string requestPath = configLocation.getRequestPath();
@@ -558,7 +574,7 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     else
         resp = otherHandler(configServer);
     resp[resp.size()-1] = '\0';
-
+  
     return resp;
 }
 
