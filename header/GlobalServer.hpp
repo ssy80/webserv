@@ -70,6 +70,8 @@ class GlobalServer : public AServer
         void createEpoll();
         void startListeningPort(std::vector<int> uniquePortsVec);
         void checkTimeoutConnections(ConfigGlobal& configGlobal);
+
+        std::string upload_directory;
         
     public:
         GlobalServer(WebServerConfig _webServerConfig);

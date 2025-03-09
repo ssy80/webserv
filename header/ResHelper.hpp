@@ -17,8 +17,8 @@ vector<unsigned char> readRequestCGI(const string& scriptPath);
 string getFileExtension(const string& filename);
 string filetype(const string& url);
 string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation);
-string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation);
-string deleteHandler();
+string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation, std::string uploadDirectory);
+string deleteHandler(std::string uploadDirectory);
 string otherHandler(ConfigServer& configServer);
 string listdir(const string& path);
 

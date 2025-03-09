@@ -169,7 +169,8 @@ void GlobalServer::startServer()
     std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec(); //get number of [server] -> get server config
     ConfigGlobal configGlobal = this->webServerConfig.getConfigGlobal();                    //get global [global] -> get global config
     std::vector<int> uniquePortsVec = this->webServerConfig.getUniquePortsVec();            //num of listening port depend on number of server   
-    
+    this->upload_directory = configGlobal.getUploadDirectory();
+
     createEpoll();                                                                          
     startListeningPort(uniquePortsVec);
     
@@ -561,13 +562,15 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::cout << "REQUEST STR: " << requestStr << std::endl;
     std::cout << "REQ PRINT: " << std::endl;
     req.print();
+
+    std::cout << "UPLOADD: " << this->upload_directory << std::endl;
     
     if (req.method == "GET" && isContainIn(methods, "GET"))
         resp = getHandler(req, configServer, configLocation);
     else if (req.method == "POST" && isContainIn(methods, "POST"))
-        resp = postHandler(req, configServer, configLocation);
+        resp = postHandler(req, configServer, configLocation, this->upload_directory);
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
-        resp = deleteHandler();
+        resp = deleteHandler(this->upload_directory);
     else
         resp = otherHandler(configServer);
     resp[resp.size()-1] = '\0';

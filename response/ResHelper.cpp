@@ -384,55 +384,59 @@ string getChunks(string chunks) {
 }
 
 // post handler is used to upload 1 file through the cgi script
-string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation) {
-	// reject other content types
-	// if (((req.headers["Content-Type"].find("multipart/form-data") == std::string::npos) 
-	// && (req.headers["Transfer-Encoding"].find("chunked") == std::string::npos))
-	// 	|| req.url.find("/cgi-bin/save_file.py") == std::string::npos
-	// 	|| req.files.empty()
-	// 	|| req.formFields.empty()) {
-	// 	return Response::ResBuilder()
-	// 		.sc(SC403)
-	// 		->mc("Connection", "close")
-	// 		->build()
-	// 		.toString() + CLRF;
-	// }
-
-	setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
+string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation, std::string uploadDirectory) {
+	string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
 	
-	if (req.headers.find("Transfer-Encoding") != req.headers.end()
-		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
-			setenv("UPLOAD_CONTENT", getChunks(req.files["body"]).c_str(), 1);
-			return "";
-		} else {
-			setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
+	std::cout << "REQ URL: " << req.url << std::endl;
+	std::cout << "REQUEST PATH: " << configLocation.getRequestPath() << std::endl;
+	std::cout << "ROOT: " << configLocation.getRoot() << std::endl;
+	std::cout << "PATH_INFO: " << PATH_INFO << std::endl;	
+
+	if (req.headers["Content-Type"].find("multipart/form-data") != std::string::npos
+		&& req.url.find("save_file.py") != std::string::npos
+		&& !req.files.empty()
+		&& !req.formFields.empty()) {
+
+		std::cout << "UPLOAD PATH: " << uploadDirectory + req.formFields["filename"] << std::endl;
+		setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
+		setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
+
+		vector<unsigned char> file = readRequestCGI(PATH_INFO);
+		if (file.empty()) {
+			return createErrorResponse(configServer, "500");
 		}
 
-	string FILE_PATH = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
-	vector<unsigned char> file = readRequestCGI(FILE_PATH);
-	std::cout << string(file.begin(), file.end()) << std::endl;
-	if (file.empty()) {
-		return createErrorResponse(configServer, "500");
+		string res;
+		res.insert(res.end(), file.begin(), file.end());
+		return res;
+	}
+	
+	else if (req.headers.find("Transfer-Encoding") != req.headers.end()
+		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
+		
+		setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
+		setenv("UPLOAD_CONTENT", getChunks(req.files["body"]).c_str(), 1);
+		vector<unsigned char> file = readRequestCGI(PATH_INFO);
+		
+		if (file.empty()) {
+			return createErrorResponse(configServer, "500");
+		}
+
+		string res;
+		res.insert(res.end(), file.begin(), file.end());
+		return res;
 	}
 
-	string res = Response::ResBuilder()
-		.sc(SC201)
-		->mc("Connection", "close")
-		->cl(file.size())
-		->build()
-		.toString();
-	
-	// res.insert(res.end(), file.begin(), file.end());
-	return res;
+	else {
+		return createErrorResponse(configServer, "405");
+	}
 }
 
 // when delete handler is called, it will delete all files in the folder
-string deleteHandler() {
-	string dir_path = "www/tmp";
-
+string deleteHandler(std::string uploadDirectory) {
 	// check if directory exists
 	struct stat st;
-	if (stat(dir_path.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
+	if (stat(uploadDirectory.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
 		return Response::ResBuilder()
 			.sc(SC200)
 			->mc("Connection", "close")
@@ -441,7 +445,7 @@ string deleteHandler() {
 	}
 
 	// delete files in directory
-	DIR *dir = opendir(dir_path.c_str());
+	DIR *dir = opendir(uploadDirectory.c_str());
 	if (!dir) {
 		return Response::ResBuilder()
 			.sc(SC200)
@@ -458,7 +462,7 @@ string deleteHandler() {
 			continue;
 		}
 
-		string full_path = dir_path + "/" + file_name;
+		string full_path = uploadDirectory + "/" + file_name;
 
 		struct stat st;
 		if (stat(full_path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {

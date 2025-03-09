@@ -2,18 +2,33 @@
 import cgi, sys, os
 
 try:
-	file_name = os.getenv("UPLOAD_FILENAME")
-	file_content = os.getenv("UPLOAD_CONTENT").encode("utf-8")
+    file_name = os.getenv("UPLOAD_FILENAME")
+    file_content = os.getenv("UPLOAD_CONTENT").encode("utf-8")
+    
+    form = cgi.FieldStorage()
+    
+    save_path = os.path.join(os.getcwd(), "www", "tmp", file_name)
+    
+    with open(save_path, "wb") as f:
+        f.write(file_content)
+    
+    body = "<h2>Success!</h2>" + f'<p>The file "{file_name}" was uploaded successfully.</p>'
+    content_length = len(body.encode("utf-8"))
+    
+    print("HTTP/1.1 201 Accepted")
+    print("Content-Type: text/html")
+    print(f"Content-Length: {content_length}")
+    print("Connection: close\n")
 
-	form = cgi.FieldStorage()
-
-	save_path = os.path.join(os.getcwd(), "www", "tmp", file_name)
-
-	with open(save_path, "wb") as f:
-		f.write(file_content)
-
-	print("<h2>Success!</h2>")
-	print(f'<p>The file "{file_name}" was uploaded successfully.</p>')
+    print(body)
 
 except:
-    print("<h2>Failure</h2>")
+    body = "<h2>Error: Unable to save file</h2>"
+    content_length = len(body.encode("utf-8"))
+    
+    print("HTTP/1.1 500 Internal Server Error")
+    print("Content-Type: text/html")
+    print(f"Content-Length: {content_length}")
+    print("Connection: close\n")
+
+    print(body)

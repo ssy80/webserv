@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigGlobal.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 19:52:54 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 19:52:55 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/09 10:20:57 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../header/ConfigGlobal.hpp"
 
 ConfigGlobal::ConfigGlobal(){}
@@ -38,8 +39,14 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
         std::cerr << "Error: invalid config [global]" << std::endl;
         exit(1);
     }
-     
+
     std::map<std::string, std::string>::iterator it;
+
+    std::cout << "Checking config keyValueMap contents:\n";
+    for (it = this->keyValueMap.begin(); it != this->keyValueMap.end(); ++it) {
+        std::cout << it->first << " = " << it->second << "\n";
+    }
+
 
     it = this->keyValueMap.find("timeout");
     if (it != this->keyValueMap.end())
@@ -83,6 +90,17 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
         std::cerr << "Error: invalid config [global]" << std::endl;
         exit(1);
     }
+
+    it = this->keyValueMap.find("upload_directory");
+    if (it != this->keyValueMap.end())
+    {
+        this->upload_directory = it->second;
+    }
+    else
+    {
+        std::cerr << "Erorr: invalid config [global]" << std::endl;
+        exit(1);
+    }
 }
 
 const std::map<std::string, std::string>& ConfigGlobal::getKeyValueMap() const
@@ -98,4 +116,10 @@ const int& ConfigGlobal::getTimeout() const
 const int& ConfigGlobal::getMaxEvents() const
 {
     return (this->max_events);
+}
+
+const std::string& ConfigGlobal::getUploadDirectory() const
+{
+    std::cout << "Getting upload" << this->upload_directory << std::endl;
+    return (this->upload_directory);
 }
