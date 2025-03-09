@@ -3,6 +3,7 @@
 #include "../header/MIME.hpp"
 #include "../header/ResHelper.hpp"
 #include "../header/ConfigLocation.hpp"
+#include "../header/ConfigServer.hpp"
 
 YSServer::~YSServer()
 {}
@@ -38,19 +39,19 @@ static void handle_client(int client_socket, string dir) {
 
 	std::string resp;
 
-    if (req.method == "GET") {
-		std::cout << "entering get handler" << std::endl;      
-		resp = getHandler(req, configLocation);
-	} else if (req.method == "POST") {
-		std::cout << "entering post handler" << std::endl;      
-		resp = postHandler(req, configLocation);
-	} else if (req.method == "DELETE") {
-		std::cout << "entering delete handler" << std::endl;      
-		resp = deleteHandler(configLocation);
-	} else {   
-		std::cout << "entering other handler" << std::endl;
-		resp = otherHandler();
-	}
+    // if (req.method == "GET") {
+	// 	std::cout << "entering get handler" << std::endl;      
+	// 	resp = getHandler(req, configServer, configLocation);
+	// } else if (req.method == "POST") {
+	// 	std::cout << "entering post handler" << std::endl;      
+	// 	resp = postHandler(req, configServer, configLocation);
+	// } else if (req.method == "DELETE") {
+	// 	std::cout << "entering delete handler" << std::endl;      
+	// 	resp = deleteHandler(configServer, configLocation);
+	// } else {   
+	// 	std::cout << "entering other handler" << std::endl;
+	// 	resp = otherHandler();
+	// }
 
 	sendRes(client_socket, resp);
 	close(client_socket);

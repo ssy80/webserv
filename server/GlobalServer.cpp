@@ -10,7 +10,16 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "../header/GlobalServer.hpp"
+#include <sys/wait.h>
 
+struct CGIProcess {
+    int pipe_fd;
+    int client_fd;
+    std::vector<unsigned char> outputBuffer;
+    pid_t pid;
+};
+
+std::map<int, CGIProcess> cgiProcesses;
 
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
 
@@ -157,8 +166,8 @@ void GlobalServer::checkTimeoutConnections(ConfigGlobal& configGlobal)
 
 void GlobalServer::startServer()
 {
-    std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec(); //get number of [server]
-    ConfigGlobal configGlobal = this->webServerConfig.getConfigGlobal();                    //get global [global]                                         
+    std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec(); //get number of [server] -> get server config
+    ConfigGlobal configGlobal = this->webServerConfig.getConfigGlobal();                    //get global [global] -> get global config
     std::vector<int> uniquePortsVec = this->webServerConfig.getUniquePortsVec();            //num of listening port depend on number of server   
     
     createEpoll();                                                                          
@@ -169,6 +178,7 @@ void GlobalServer::startServer()
     char buffer[READ_BUFFER];
     int nunEventFds;
 
+    // waits for max_events events 
     while (true)                                                                            // check event loop.
     {                   
         nunEventFds = epoll_wait(this->epoll_fd, events, max_events, 1000);                 //get number events need to check
@@ -178,14 +188,15 @@ void GlobalServer::startServer()
             exit(1);
         }
 
+    // process events
     std::cerr << "connections: " << connections.size() << std::endl;
 
         int fd;
         bool isListen;
         for (int i = 0; i < nunEventFds; i++) 
         {
-            uint32_t ev = events[i].events;
-            fd = events[i].data.fd;                                               
+            uint32_t ev = events[i].events;                                     // store event type
+            fd = events[i].data.fd;                                             // store fd that triggered the event
             isListen = false;
             for (size_t i = 0; i < this->listenFdsVec.size(); i++) 
             {
@@ -215,128 +226,153 @@ void GlobalServer::startServer()
                     addConnection(clientFd);
                 }
             }  
-            else                                                                          //process event from a client fd
+            else                                                                          //process event (client request) from a client fd
             {
-                Connection* conn = static_cast<Connection*>(events[i].data.ptr);
-                bool closeConn = false;
-                conn->lastActive = getCurrentTimeMs();
+                // // check if fd is a cgi pipe
+                // std::map<int, CGIProcess>::iterator it = cgiProcesses.find(fd);
+                // if (it != cgiProcesses.end()) {                 // is a CGI output pipe
+                //     CGIProcess& cgi = it->second;
+                //     char buffer[4096];
+                //     ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
 
-                if (ev & EPOLLIN)                                                         //reading
-                { 
-                    int count;
-                    while (true)                                                 
-                    {
-                        memset(buffer, 0, READ_BUFFER);
-                        count = recv(conn->fd, buffer, sizeof(buffer), 0);
-                        if (count > 0)                                                    // data read
-                        {
-                            conn->buffer.append(buffer, count);
-                        } 
-                        else if (count == 0)                                              // client closed connection
-                        {
-                            closeConn = true;
-                            removeConnection(conn);
-                            break;
-                        } 
-                        else if (count == -1)                                   // no more data, break out recv loop, wait for next read event
-                        {
-                            //if (errno == EAGAIN || errno == EWOULDBLOCK)      // no more data, stop recv
-                            //    break; 
-                            break;
-                        }
-                    }
+                //     if (bytesRead > 0) {
+                //         cgi.outputBuffer.insert(cgi.outputBuffer.end(), buffer, buffer + bytesRead);
+                //     }
+                //     else {      // EOF
+                //         close(fd);
+                //         waitpid(cgi.pid, nullptr, 0);
+                //         cgiProcesses.erase(fd);
 
-                    if (closeConn)
-                        break;
+                //         // switch client socket to EPOLLOUT to send CGI response
+                //         struct epoll_event event;
+                //         event.data.ptr = &connections[cgi.client_fd];
+                //         event.events = EPOLLOUT;
+                //         epoll_ctl(epoll_fd, EPOLL_CTL_MOD, cgi.client_fd, &event);
+                //     }
+                // }
 
-                    size_t headerEnd = conn->buffer.find("\r\n\r\n");                     //check got received complete header
-                    if (headerEnd == std::string::npos)                                   //header incomplete; wait for next EPOLLIN event.
-                        break;
+                // else {
+                    Connection* conn = static_cast<Connection*>(events[i].data.ptr);
+                    bool closeConn = false;
+                    conn->lastActive = getCurrentTimeMs();
 
-                    ConfigServer configServer = parseConfigServer(conn->buffer);         //get correct server according to config
-                    int contentLength = parseContentLength(conn->buffer);                // Parse Content-Length from header
-
-                    size_t total_expected = headerEnd + 4 + contentLength;               // Calculate expected total length: headers + CRLF CRLF + body.
-                    bool isMaxBodySize = false;
-                    if(configServer.getMaxBodySize() > 0 && contentLength > configServer.getMaxBodySize())
-                    {
-                        isMaxBodySize = true;
-                    }
-                    else if (configServer.getMaxBodySize() > 0 && (conn->buffer.size() - (headerEnd + 4) > (long unsigned int)configServer.getMaxBodySize()))
-                    {
-                        isMaxBodySize = true;
-                    }
-                    else
+                    if (ev & EPOLLIN)                                                         //reading
                     { 
-                        if (conn->buffer.size() < total_expected)                           //Full request (headers + body) not received yet, partial data remains in conn->buffer, wait for more data.
-                            break;
-                    }                                                  
-
-                    if (isMaxBodySize)
-                    {
-                        conn->responseBuffer = getErrorResponse(conn->buffer, "413");
-                        conn->bytesSent = 0;
-                        conn->buffer.clear();
-                    }
-                    else
-                    {
-                        conn->responseBuffer = handleRequest(conn->buffer);
-                        
-                        if (conn->responseBuffer.empty())
+                        int count;
+                        while (true)                                                 
                         {
-                            conn->responseBuffer = getErrorResponse(conn->buffer, "404");
+                            memset(buffer, 0, READ_BUFFER);
+                            count = recv(conn->fd, buffer, sizeof(buffer), 0);
+                            if (count > 0)                                                    // data read
+                            {
+                                conn->buffer.append(buffer, count);
+                            } 
+                            else if (count == 0)                                              // client closed connection
+                            {
+                                closeConn = true;
+                                removeConnection(conn);
+                                break;
+                            } 
+                            else if (count == -1)                                   // no more data, break out recv loop, wait for next read event
+                            {
+                                //if (errno == EAGAIN || errno == EWOULDBLOCK)      // no more data, stop recv
+                                //    break; 
+                                break;
+                            }
                         }
 
-                        conn->bytesSent = 0;
-                        conn->buffer.clear();
-                    }
-
-                    struct epoll_event event;
-                    memset(&event, 0, sizeof(event));
-                    event.data.ptr = conn;
-                    event.events = EPOLLOUT;                                                //modify to wait for write event.
-                    if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
-                    {
-                        std::cerr << "Error: epoll_ctl mod EPOLLOUT" << std::endl;
-                    }
-                }
-                else if (ev & EPOLLOUT && (conn->responseBuffer.empty())) 
-                {
-                    removeConnection(conn);
-                }
-                else if (ev & EPOLLOUT && (!conn->responseBuffer.empty()))            //sending part
-                {
-                    std::cerr << "conn->responseBuffer.size(): " << conn->responseBuffer.size() << std::endl;
-
-                    int n;    
-                    while (conn->bytesSent < conn->responseBuffer.size()) 
-                    {
-                        n = send(conn->fd, conn->responseBuffer.data() + conn->bytesSent, conn->responseBuffer.size() - conn->bytesSent, MSG_NOSIGNAL);            
-                        if (n > 0) 
-                        {
-                            conn->bytesSent += n;
-                            std::cerr << "--bytes_sent--: " << conn->bytesSent << std::endl;
-                        }
-                        else if(n == 0)                                                        //client close
-                        {
-                            removeConnection(conn);
+                        if (closeConn)
                             break;
-                        }
-                        else if (n == -1)                                                    //Cannot send more now; break and wait for next EPOLLOUT.
-                        {
-                            break;
-                        }
-                        /*else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) 
-                        
-                            // Cannot send more now; break and wait for next EPOLLOUT.
-                            break;
-                        } */
-                    }
 
-                    if (conn->bytesSent == conn->responseBuffer.size())                   // If the entire response is sent, remove connection
+                        size_t headerEnd = conn->buffer.find("\r\n\r\n");                     //check got received complete header
+                        if (headerEnd == std::string::npos)                                   //header incomplete; wait for next EPOLLIN event.
+                            break;
+
+                        ConfigServer configServer = parseConfigServer(conn->buffer);         //get correct server according to config
+                        int contentLength = parseContentLength(conn->buffer);                // Parse Content-Length from header
+
+                        size_t total_expected = headerEnd + 4 + contentLength;               // Calculate expected total length: headers + CRLF CRLF + body.
+                        bool isMaxBodySize = false;
+                        if(configServer.getMaxBodySize() > 0 && contentLength > configServer.getMaxBodySize())
+                        {
+                            isMaxBodySize = true;
+                        }
+                        else if (configServer.getMaxBodySize() > 0 && (conn->buffer.size() - (headerEnd + 4) > (long unsigned int)configServer.getMaxBodySize()))
+                        {
+                            isMaxBodySize = true;
+                        }
+                        else
+                        { 
+                            if (conn->buffer.size() < total_expected)                           //Full request (headers + body) not received yet, partial data remains in conn->buffer, wait for more data.
+                                break;
+                        }                                                  
+
+                        if (isMaxBodySize)
+                        {
+                            conn->responseBuffer = getErrorResponse(conn->buffer, "413");
+                            conn->bytesSent = 0;
+                            conn->buffer.clear();
+                        }
+                        else
+                        {
+                            conn->responseBuffer = handleRequest(conn->buffer);
+                            
+                            if (conn->responseBuffer.empty())
+                            {
+                                conn->responseBuffer = getErrorResponse(conn->buffer, "404");
+                            }
+
+                            conn->bytesSent = 0;
+                            conn->buffer.clear();
+                        }
+
+                        struct epoll_event event;
+                        memset(&event, 0, sizeof(event));
+                        event.data.ptr = conn;
+                        event.events = EPOLLOUT;                                                //modify to wait for write event.
+                        if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
+                        {
+                            std::cerr << "Error: epoll_ctl mod EPOLLOUT" << std::endl;
+                        }
+                    }
+                    else if (ev & EPOLLOUT && (conn->responseBuffer.empty())) 
                     {
                         removeConnection(conn);
                     }
+                    else if (ev & EPOLLOUT && (!conn->responseBuffer.empty()))            //sending part
+                    {
+                        std::cerr << "conn->responseBuffer.size(): " << conn->responseBuffer.size() << std::endl;
+
+                        int n;    
+                        while (conn->bytesSent < conn->responseBuffer.size()) 
+                        {
+                            n = send(conn->fd, conn->responseBuffer.data() + conn->bytesSent, conn->responseBuffer.size() - conn->bytesSent, MSG_NOSIGNAL);            
+                            if (n > 0) 
+                            {
+                                conn->bytesSent += n;
+                                std::cerr << "--bytes_sent--: " << conn->bytesSent << std::endl;
+                            }
+                            else if(n == 0)                                                        //client close
+                            {
+                                removeConnection(conn);
+                                break;
+                            }
+                            else if (n == -1)                                                    //Cannot send more now; break and wait for next EPOLLOUT.
+                            {
+                                break;
+                            }
+                            /*else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) 
+                            
+                                // Cannot send more now; break and wait for next EPOLLOUT.
+                                break;
+                            } */
+                        }
+
+                        if (conn->bytesSent == conn->responseBuffer.size())                   // If the entire response is sent, remove connection
+                        {
+                            removeConnection(conn);
+                        }
+                    // }
                 }
             }   
         }
@@ -503,7 +539,6 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::string methods = configLocation.getMethods();
     std::string redirect = configLocation.getRedirect();
     std::string filePath = replacePath(req.url, requestPath, root);            //map request_path to root in [location]
-    std::cout << "filePath: " << filePath << std::endl; 
 
     std::string resp;
 
@@ -528,16 +563,15 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     req.print();
     
     if (req.method == "GET" && isContainIn(methods, "GET"))
-        resp = getHandler(req, configLocation);
+        resp = getHandler(req, configServer, configLocation);
     else if (req.method == "POST" && isContainIn(methods, "POST"))
-        resp = postHandler(req, configLocation);
+        resp = postHandler(req, configServer, configLocation);
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
-        resp = deleteHandler(configLocation);
+        resp = deleteHandler();
     else
-        resp = otherHandler();
+        resp = otherHandler(configServer);
     resp[resp.size()-1] = '\0';
 
-    std::cout << resp << std::endl;
     return resp;
 }
 

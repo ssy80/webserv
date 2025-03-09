@@ -1,14 +1,31 @@
 #!/usr/bin/env python3
 import sys
+import requests
 
-image_path = "./www/images/42.png"
+image_url = "https://picsum.photos/536/354"
 
 try:
     # Read image as binary
-    with open(image_path, "rb") as f:
-        img_data = f.read()
+    response = requests.get(image_url, stream=True)
+    response.raise_for_status()
+    
+    body = response.content
+    content_length = len(body)
+    
+    print("HTTP/1.1 200 OK")
+    print("Content-Type: image/jpeg")
+    print(f"Content-Length: {content_length}")
+    print("Connection: close\n", end="")
 
-    sys.stdout.buffer.write(img_data)
+    sys.stdout.buffer.write(body)
 
 except FileNotFoundError:
-    print("<h2>Error: Image not found.</h2>")
+    body = "<h2>Error: Unable to fetch image.</h2>"
+    content_length = len(body.encode("utf-8"))
+    
+    print("HTTP/1.1 500 Internal Server Error")
+    print("Content-Type: text/html")
+    print(f"Content-Length: {content_length}")
+    print("Connection: close\n")
+
+    print(body)

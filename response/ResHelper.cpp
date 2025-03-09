@@ -1,6 +1,61 @@
 #include "../header/ResHelper.hpp"
+#include "../header/GlobalServer.hpp"
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/epoll.h>
+
+std::string createErrorResponse(ConfigServer& configServer, std::string errorCode)
+{
+	std::map<std::string, std::string> errorPageMap = configServer.getErrorPageMap();
+    std::string filePath;
+    std::map<std::string, std::string>::iterator it;
+    std::string statusCode;
+
+    it = errorPageMap.find(errorCode);                         //find error page
+    if (it != errorPageMap.end())
+    {
+        filePath = it->second;
+		if (errorCode == "403")
+			statusCode == "403 Forbidden";
+        else if (errorCode == "404")
+            statusCode = "404 Not Found";
+		else if (errorCode == "405")
+			statusCode = "405 Not Allowed";
+		else if (errorCode == "406")
+			statusCode == "406 Not Acceptable";
+		else if (errorCode == "413")
+            statusCode = "413 Content Too Large";
+		else if (errorCode == "500")
+			statusCode == "500 Internal Server Error";
+        else if (errorCode == "501")
+            statusCode = "501 Not Implemented";
+    }
+    else                                                      //cannot find error page, send default error page 404
+    {
+        std::map<std::string, std::string> defaultErrorPageMap = configServer.getDefaultErrorPageMap();
+        it = defaultErrorPageMap.find("404");
+        if (it != defaultErrorPageMap.end())
+        {
+            filePath = it->second;
+            statusCode = "404 Not Found";
+        }
+    }
+
+    //read file
+    std::string output; 
+    std::string file = readServerFile(filePath);
+    Response res = Response::ResBuilder()
+									.sc(statusCode)
+                                    ->ct(MIME::KEY + MIME::HTML)
+									->mc("Connection:", "close")
+									->cl(file.size())
+									->build();
+    output = res.toString();
+    output = output + file + '\0';
+    return (output);
+}
 
 vector<unsigned char> readRequestFile(const string& resource){
 	ifstream file;
@@ -19,12 +74,53 @@ vector<unsigned char> readRequestFile(const string& resource){
 	return output;	
 }
 
+// int readRequestCGI(const string& scriptPath, int clientFd) {
+// 	int pipe_fd[2];
+// 	if (pipe(pipe_fd) == -1) {
+// 		std::cerr << "Pipe failed" << std::endl;
+// 		return -1;
+// 	}
+	
+// 	pid_t pid = fork();
+// 	if (pid < 0) {
+// 		std::cerr << "Fork failed" << std::endl;
+// 		return -1;
+// 	}
+	
+// 	if (pid == 0) {
+// 		close(pipe_fd[0]);
+// 		dup2(pipe_fd[1], STDOUT_FILENO);
+// 		close(pipe_fd[1]);
+
+// 		char* args[] = {const_cast<char*>(scriptPath.c_str()), NULL};
+// 		execvp(args[0], args);
+// 		std::cerr << "Exec failed" << std::endl;
+// 		exit(1);
+
+// 	} else {
+// 		close(pipe_fd[1]);
+
+// 		int flags = fcntl(pipe_fd[0], F_GETFL, 0);
+// 		fcntl(pipe_fd[0], F_SETFL, flags | O_NONBLOCK);
+
+// 		struct epoll_event event;
+// 		event.data.fd = pipe_fd[0];
+// 		event.events = EPOLLIN;
+// 		epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pipe_fd[0], &event);
+
+// 		cgiProcesses[pipe_fd[0]] = {pipe_fd[0], client_fd, {}, pid};
+
+// 		return pipe_fd[0];
+
+// 	}
+// }
+
 vector<unsigned char> readRequestCGI(const string& scriptPath) {
 	vector<unsigned char> output;
 	output.reserve(2048);
-	
-	int fd[2];
-	if (pipe(fd) == -1) {
+
+	int pipe_fd[2];
+	if (pipe(pipe_fd) == -1) {
 		std::cerr << "Pipe failed" << std::endl;
 		return output;
 	}
@@ -36,9 +132,9 @@ vector<unsigned char> readRequestCGI(const string& scriptPath) {
 	}
 	
 	if (pid == 0) {
-		close(fd[0]);
-		dup2(fd[1], STDOUT_FILENO);
-		close(fd[1]);
+		close(pipe_fd[0]);
+		dup2(pipe_fd[1], STDOUT_FILENO);
+		close(pipe_fd[1]);
 
 		char* args[] = {const_cast<char*>(scriptPath.c_str()), NULL};
 		execvp(args[0], args);
@@ -46,22 +142,22 @@ vector<unsigned char> readRequestCGI(const string& scriptPath) {
 		exit(1);
 
 	} else {
-		close(fd[1]);
+		close(pipe_fd[1]);
 
 		char buffer[256];
 		ssize_t bytesRead;
 		long start = getCurrentTimeMs();
-        
+
 		while (getCurrentTimeMs() - start < TIMEOUT) {
-			bytesRead = read(fd[0], buffer, sizeof(buffer));
+			bytesRead = read(pipe_fd[0], buffer, sizeof(buffer));
 			if (bytesRead > 0) {
 				output.insert(output.end(), buffer, buffer + bytesRead);
 			} else {
 				break;
 			}
 		}
-		
-		close(fd[0]);
+
+		close (pipe_fd[0]);
 		waitpid(pid, NULL, 0);
 		return output;
 	}
@@ -154,7 +250,7 @@ string filetype(const string& url){
 	return map[ext];
 }
 
-static string bonusCookie(Request& req){
+static string bonusCookie(ConfigServer& configServer, Request& req){
 	if (req.url=="/14789632"){
 		Response res = Response::ResBuilder()
 						.sc(SC200)
@@ -169,11 +265,7 @@ static string bonusCookie(Request& req){
 		req.print();
 		cout << "this is cookie " << req.headers["Cookie"] << endl;
 		if (req.headers["Cookie"] != "session=login\r"){
-			return Response::ResBuilder()
-						.sc(SC403)
-						->mc("Connection", "close")
-						->build()
-						.toString() + CLRF;
+			return createErrorResponse(configServer, "403");
 		}
 		return Response::ResBuilder()
 			.sc(SC200)
@@ -186,34 +278,51 @@ static string bonusCookie(Request& req){
 	return "";
 }
 
-string getHandler(Request& req, ConfigLocation& config) {
-	bool idx = (config.getAutoIndex() == "on");
+string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation) {
+	string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
+	
+	std::cout << "REQ URL: " << req.url << std::endl;
+	std::cout << "REQUEST PATH: " << configLocation.getRequestPath() << std::endl;
+	std::cout << "ROOT: " << configLocation.getRoot() << std::endl;
+	std::cout << "PATH_INFO: " << PATH_INFO << std::endl;	
+	
+	// cannot find file, return 404
+	ifstream f((PATH_INFO).c_str());
+	if (!f.good()) {
+		std::cerr << "file not found" << std::endl;
+		return createErrorResponse(configServer, "404");
+	}
+	
+	// if file is executable, serve cgi
+	struct stat st;
+	if (stat(PATH_INFO.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) != 0) {
+		// int cgiPipeFd = readRequestCGI(PATH_INFO, clientFd);
+		// if (cgiPipeFd == -1) {
+			// return createErrorResponse(configServer, "500");
+		// }
+		// return "";		// CGI response will be sent later
+
+		vector<unsigned char> file = readRequestCGI(PATH_INFO);
+		if (file.empty()) {
+			return createErrorResponse(configServer, "500");
+		}
+		
+		string res;
+		res.insert(res.end(), file.begin(), file.end());
+		return res;
+	}
+
+	// if file is not executable, serve static page
+
 	// cookie management for bonus
-	string bonusstr = bonusCookie(req);
+	string bonusstr = bonusCookie(configServer, req);
 	if (!bonusstr.empty())
 		return bonusstr;
 	
-	string PATH_INFO = replacePath(req.url, config.getRequestPath(), config.getRoot());
-	
-	ifstream f((PATH_INFO).c_str());
-
-	std::cout << "HERE 1" << std::endl;
-
-	// cannot find file, return 404
-	if (!f.good()){
-		std::cout << "HERE 0" << std::endl;
-		return Response::ResBuilder()
-			.sc(SC404)
-			->mc("Connection", "close")
-			->build()
-			.toString() + CLRF;
-	}
-
 	// if autoindex is true
-	if (idx && req.url[req.url.size() - 1] == '/') {
-		std::cout << "HERE 2" << std::endl;
-		string tmp  = listdir(config.getRoot() + req.url);
-		vector<unsigned char> file = readRequestFile(config.getRoot() + req.url + config.getIndex());
+	if ((configLocation.getAutoIndex() == "on") && req.url[req.url.size() - 1] == '/') {
+		string tmp  = listdir(configLocation.getRoot() + req.url);
+		vector<unsigned char> file = readRequestFile(configLocation.getRoot() + req.url + configLocation.getIndex());
 		if (file.empty()){
 			string res = Response::ResBuilder()
 				.sc(SC200)
@@ -228,14 +337,9 @@ string getHandler(Request& req, ConfigLocation& config) {
 
 	// getting index page
 	if (req.url == "/") {
-		std::cout << "HERE 3" << std::endl;
-		vector<unsigned char> file = readRequestFile(config.getRoot() + '/' + config.getIndex());
+		vector<unsigned char> file = readRequestFile(configLocation.getRoot() + '/' + configLocation.getIndex());
 		if (file.empty()) {
-			return Response::ResBuilder()
-			.sc(SC404)
-			->mc("Connection", "close")
-			->build()
-			.toString() + CLRF;
+			return createErrorResponse(configServer, "404");
 		}
 
 		string res = Response::ResBuilder()
@@ -249,54 +353,22 @@ string getHandler(Request& req, ConfigLocation& config) {
 		res.insert(res.end(), file.begin(), file.end());
 		return res;
 	}
-	
-	// getting cgi files
-	if (req.url.find("/cgi-bin") != std::string::npos) {
-		std::cout << "HERE 4" << std::endl;
-		vector<unsigned char> file = readRequestCGI(PATH_INFO);
-		if (file.empty()) {
-			return Response::ResBuilder()
-			.sc(SC404)
-			->mc("Connection", "close")
-			->build()
-			.toString() + CLRF;
-		}
-
-		string res = Response::ResBuilder()
-			.sc(SC200)
-			->mc("Connection", "close")
-			->cl(file.size())
-			->build()
-			.toString();
-    
-		res.insert(res.end(), file.begin(), file.end());
-		return res;
-	}
 
 	// other path
-	std::cout << "HERE 5" << std::endl;
 	if (getFileExtension(req.url)==""){
-		return Response::ResBuilder()
-			.sc(SC404)
-			->mc("Connection", "close")
-			->build()
-			.toString() + CLRF;
+		std::cerr << "unknown file extension" << std::endl;
+		return createErrorResponse(configServer, "404");
 	}
 
-	std::cout << "HERE 6" << std::endl;
-	vector<unsigned char> file = readRequestFile(config.getRoot() + req.url);
+	vector<unsigned char> file = readRequestFile(PATH_INFO);
 	if (file.empty()) {
-		return Response::ResBuilder()
-		.sc(SC404)
-		->mc("Connection", "close")
-		->build()
-		.toString() + CLRF;
+		std::cerr << "file is empty" << std::endl;
+		return createErrorResponse(configServer, "404");
 	}
 	
-	std::cout << "HERE 7" << std::endl;
 	string res = Response::ResBuilder()
 		.sc(SC200)
-		->ct(MIME::KEY + filetype(config.getRoot()+ req.url))
+		->ct(MIME::KEY + filetype(PATH_INFO))
 		->mc("Connection", "close")
 		->cl(file.size())
 		->build()
@@ -312,7 +384,7 @@ string getChunks(string chunks) {
 }
 
 // post handler is used to upload 1 file through the cgi script
-string postHandler(Request& req, ConfigLocation& config) {
+string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation) {
 	// reject other content types
 	// if (((req.headers["Content-Type"].find("multipart/form-data") == std::string::npos) 
 	// && (req.headers["Transfer-Encoding"].find("chunked") == std::string::npos))
@@ -336,15 +408,11 @@ string postHandler(Request& req, ConfigLocation& config) {
 			setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
 		}
 
-	string FILE_PATH = replacePath(req.url, config.getRequestPath(), config.getRoot());
+	string FILE_PATH = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
 	vector<unsigned char> file = readRequestCGI(FILE_PATH);
 	std::cout << string(file.begin(), file.end()) << std::endl;
 	if (file.empty()) {
-		return Response::ResBuilder()
-		.sc(SC500)
-		->mc("Connection", "close")
-		->build()
-		.toString() + CLRF;
+		return createErrorResponse(configServer, "500");
 	}
 
 	string res = Response::ResBuilder()
@@ -359,8 +427,7 @@ string postHandler(Request& req, ConfigLocation& config) {
 }
 
 // when delete handler is called, it will delete all files in the folder
-string deleteHandler(ConfigLocation& config) {
-	std::cout << config.getRoot() << std::endl;
+string deleteHandler() {
 	string dir_path = "www/tmp";
 
 	// check if directory exists
@@ -400,7 +467,6 @@ string deleteHandler(ConfigLocation& config) {
 		}
 	}
 	closedir(dir);
-	std::cout << "OK" << std::endl;
 	return Response::ResBuilder()
 		.sc(SC200)
 		->mc("Connection", "close")
@@ -408,13 +474,8 @@ string deleteHandler(ConfigLocation& config) {
 		.toString() + CLRF;
 }
 
-string otherHandler(){
-	string res = Response::ResBuilder()
-		.sc(SC406)
-		->mc("Connection", "close")
-		->build()
-		.toString() + CLRF;
-	return res;
+string otherHandler(ConfigServer& configServer){
+	return createErrorResponse(configServer, "501");
 }
 
 string listdir(const string& path){

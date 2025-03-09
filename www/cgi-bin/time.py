@@ -1,8 +1,13 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 import datetime
 
-try:
-    print(f"<h2>Current Server Time</h2><p>{datetime.datetime.now()}</p>")
+body = f"<h2>Current Server Time</h2><p>{datetime.datetime.now()}</p>"
 
-except:
-    print("<h2>Error</h2>")
+content_length = len(body.encode('utf-8'))
+
+print("HTTP/1.1 200 OK")
+print("Content-Type: text/html")
+print(f"Content-Length: {content_length}")
+print("Connection: close\n")
+
+print(body)

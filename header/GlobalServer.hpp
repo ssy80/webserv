@@ -65,18 +65,18 @@ class GlobalServer : public AServer
         ConfigServer parseConfigServer(std::string requestStr);
 
         std::string handleRequest(std::string& requestStr);
+        std::string getErrorResponse(std::string& requestStr, std::string errorCode);
 
         void createEpoll();
         void startListeningPort(std::vector<int> uniquePortsVec);
         void checkTimeoutConnections(ConfigGlobal& configGlobal);
-        std::string getErrorResponse(std::string& requestStr, std::string errorCode);
-
+        
     public:
         GlobalServer(WebServerConfig _webServerConfig);
         ~GlobalServer();
         GlobalServer(const GlobalServer& other);
         GlobalServer& operator=(const GlobalServer& other);
-
+        
         void startServer();
 
 };
