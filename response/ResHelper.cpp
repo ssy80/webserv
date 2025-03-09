@@ -397,33 +397,36 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
 }
 
 std::string getChunks(std::string& chunks) {
-    std::string delimiter = "\r\n";
-    std::vector<std::string> tokens = split(chunks, delimiter);
-    
-    std::string res;
-    size_t i = 0;
+	std::cout << "GETCHUNKS: " << chunks << std::endl;
+	size_t i = 0;
+	string res;
 
-    while (i < tokens.size()) {
-        std::string chunkSizeHex = tokens[i];
-        if (chunkSizeHex.empty()) {
-            ++i;
-            continue;  // Skip empty tokens
-        }
+	while (i < chunks.size()) {
+	
+		size_t clrfPos = chunks.find("\r\n", i);
+		if (clrfPos == std::string::npos) {
+			std::cerr << "Error: Invalid chunked encoding" << std::endl;
+			break;
+		}
 
-        int chunkSize;
-        std::stringstream ss;
-        ss << std::hex << chunkSizeHex;
-        ss >> chunkSize;
+		string chunkSizeHex = chunks.substr(i, clrfPos - i);
+		std::stringstream ss;
+		size_t chunkSize;
+		ss << std::hex << chunkSizeHex;
+		if (!(ss >> chunkSize)) {
+			std::cerr << "Error: failed to parse chunk size: " << chunkSizeHex << std::endl;
+		}
 
-        if (chunkSize == 0) break;  // End of chunks
+		i = clrfPos + 2;
+		
+		if (chunkSize == 0)
+			break;
+		
+		res.append(chunks.substr(i, chunkSize));
+		i += chunkSize + 2;
 
-        if (++i >= tokens.size()) break;  // Prevent out-of-bounds
-
-        std::string chunkData = tokens[i].substr(0, chunkSize);  // Get exact bytes
-        std::cerr << "Chunk Data: " << chunkData << std::endl;
-        res += chunkData;
-        ++i;  // Move to the next chunk size
-    }
+		std::cout << chunkSize << res << std::endl;
+	}
 
     std::cerr << "RES: " << res << std::endl;
     return res;
@@ -471,9 +474,12 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 		string upload_filename = (uploadDirectory + "/" + "chunks.txt").substr(2);
 		//string upload_filename = req.formFields["filename"];
 		
-		string test = "4\r\nWiki\r\n7\r\npedia i\r\nB\r\nn \r\n chunks.\r\n0\r\n\r\n";
+		string test = "4\r\nWiki\r\n7\r\npedia i\r\nB\r\nn \r\n chunkQ.\r\n0\r\n\r\n";
 		string upload_content = getChunks(test);
 		//string upload_content = getChunks(req.files["body"]);
+		if (upload_content.empty()) {
+			return createErrorResponse(configServer, "400");
+		}
 		
 		std::vector<std::string> envVars;
 		envVars.push_back("UPLOAD_FILENAME=" + upload_filename);
