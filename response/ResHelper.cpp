@@ -296,7 +296,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	
 	// if file is executable, serve cgi
 	struct stat st;
-	if (stat(PATH_INFO.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) != 0) {
+	if (stat(PATH_INFO.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) != 0 && !S_ISDIR(st.st_mode)) {
 		// int cgiPipeFd = readRequestCGI(PATH_INFO, clientFd);
 		// if (cgiPipeFd == -1) {
 			// return createErrorResponse(configServer, "500");
@@ -338,6 +338,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 
 	// getting index page
 	if (req.url == "/") {
+		std::cout << "GETTING INDEX" << std::endl;
 		vector<unsigned char> file = readRequestFile(configLocation.getRoot() + '/' + configLocation.getIndex());
 		if (file.empty()) {
 			return createErrorResponse(configServer, "404");
