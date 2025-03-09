@@ -1,14 +1,11 @@
 #!/usr/bin/python3
 import cgi, sys, os
 
-try:
-    file_name = os.getenv("UPLOAD_FILENAME")
-    file_content = os.getenv("UPLOAD_CONTENT").encode("utf-8")
-    
-    form = cgi.FieldStorage()
-    
-    save_path = os.path.join(os.getcwd(), file_name)
-    
+file_name = os.getenv("UPLOAD_FILENAME")
+file_content = os.getenv("UPLOAD_CONTENT").encode("utf-8")    
+save_path = os.path.join(os.getcwd(), file_name)
+
+try:    
     with open(save_path, "wb") as f:
         f.write(file_content)
     
@@ -23,7 +20,7 @@ try:
     print(body)
 
 except:
-    body = "<h2>Error: Unable to save file</h2>"
+    body = "<h2>Error: Unable to save file</h2>" + save_path
     content_length = len(body.encode("utf-8"))
     
     print("HTTP/1.1 500 Internal Server Error")

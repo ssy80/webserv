@@ -403,9 +403,12 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 		&& !req.files.empty()
 		&& !req.formFields.empty()) {
 
+		mkdir(uploadDirectory.c_str(), 777);
 		string upload_filename = (uploadDirectory + "/" + req.formFields["filename"]).substr(2);
 		string upload_content = req.files["filename"];
 
+		std::cout << upload_filename << std::endl;
+		std::cout << upload_content << std::endl;
 		setenv("UPLOAD_FILENAME", upload_filename.c_str(), 1);
 		setenv("UPLOAD_CONTENT", upload_content.c_str(), 1);
 
