@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 19:52:54 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/09 13:36:40 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/09 18:00:03 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,11 +42,6 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
     }
 
     std::map<std::string, std::string>::iterator it;
-
-    std::cout << "Checking config keyValueMap contents:\n";
-    for (it = this->keyValueMap.begin(); it != this->keyValueMap.end(); ++it) {
-        std::cout << it->first << " = " << it->second << "\n";
-    }
 
 
     it = this->keyValueMap.find("timeout");
@@ -121,6 +116,5 @@ const int& ConfigGlobal::getMaxEvents() const
 
 const std::string& ConfigGlobal::getUploadDirectory() const
 {
-    std::cout << "Getting upload" << this->upload_directory << std::endl;
     return (this->upload_directory);
 }

@@ -294,13 +294,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	if (!bonusstr.empty())
 		return bonusstr;
 
-
 	string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
-	
-	std::cout << "REQ URL: " << req.url << std::endl;
-	std::cout << "REQUEST PATH: " << configLocation.getRequestPath() << std::endl;
-	std::cout << "ROOT: " << configLocation.getRoot() << std::endl;
-	std::cout << "PATH_INFO: " << PATH_INFO << std::endl;	
 	
 	// cannot find file, return 404
 	ifstream f((PATH_INFO).c_str());
@@ -348,7 +342,6 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 
 	// getting index page
 	if (req.url == "/") {
-		std::cout << "GETTING INDEX" << std::endl;
 		vector<unsigned char> file = readRequestFile(PATH_INFO + configLocation.getIndex());
 		if (file.empty()) {
 			return createErrorResponse(configServer, "404");
@@ -412,7 +405,6 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 		string upload_filename = (uploadDirectory + "/" + req.formFields["filename"]).substr(2);
 		string upload_content = req.files["filename"];
 
-		std::cout << "uploadfilename " << upload_filename << std::endl;
 		setenv("UPLOAD_FILENAME", upload_filename.c_str(), 1);
 		setenv("UPLOAD_CONTENT", upload_content.c_str(), 1);
 
@@ -451,7 +443,6 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 
 // when delete handler is called, it will delete all files in the folder
 string deleteHandler(std::string uploadDirectory) {
-	std::cout << "A: 0" << uploadDirectory << std::endl;
 	// check if directory exists
 	struct stat st;
 	if (stat(uploadDirectory.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
@@ -461,7 +452,6 @@ string deleteHandler(std::string uploadDirectory) {
 			->build()
 			.toString() + CLRF;
 	}
-	std::cout << "A: 1" << std::endl;
 
 	// delete files in directory
 	DIR *dir = opendir(uploadDirectory.c_str());
@@ -472,7 +462,6 @@ string deleteHandler(std::string uploadDirectory) {
 			->build()
 			.toString() + CLRF;
 	}
-	std::cout << "A: 2" << std::endl;
 	struct dirent *entry;
 	while ((entry = readdir(dir)) != NULL) {
 		string file_name = entry->d_name;
