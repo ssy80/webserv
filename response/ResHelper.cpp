@@ -40,7 +40,7 @@ std::string createErrorResponse(ConfigServer& configServer, std::string errorCod
         if (it != defaultErrorPageMap.end())
         {
             filePath = it->second;
-            statusCode = "404 Not Found";
+            statusCode = SC404;
         }
     }
 
@@ -322,8 +322,8 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	
 	// if autoindex is true
 	if ((configLocation.getAutoIndex() == "on") && req.url[req.url.size() - 1] == '/') {
-		string tmp  = listdir(configLocation.getRoot() + req.url);
-		vector<unsigned char> file = readRequestFile(configLocation.getRoot() + req.url + configLocation.getIndex());
+		string tmp  = listdir(PATH_INFO);
+		vector<unsigned char> file = readRequestFile(PATH_INFO + configLocation.getIndex());
 		if (file.empty()){
 			string res = Response::ResBuilder()
 				.sc(SC200)
@@ -339,7 +339,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	// getting index page
 	if (req.url == "/") {
 		std::cout << "GETTING INDEX" << std::endl;
-		vector<unsigned char> file = readRequestFile(configLocation.getRoot() + '/' + configLocation.getIndex());
+		vector<unsigned char> file = readRequestFile(PATH_INFO + configLocation.getIndex());
 		if (file.empty()) {
 			return createErrorResponse(configServer, "404");
 		}
@@ -496,7 +496,6 @@ string listdir(const string& path){
 	DIR* dir = opendir(path.c_str());
     string res = "";
 	if (dir == NULL) {
-        // cout << "Invalid directory or error accessing directory." << endl;
 		res += "Invalid directory or error accessing directory.";
         return res;
     }
