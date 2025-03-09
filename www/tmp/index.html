@@ -1,3 +1,4 @@
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -63,19 +64,3 @@
         <img src="/images/cat.gif" alt="cat" class="center" />
 
         <form enctype="multipart/form-data" action="/cgi-bin/save_file.py" method="post">
-            <p>File: <input type="file" name="filename" required /></p>
-            <p><input type="submit" value="Upload File" /></p>
-        </form>
-        <button onclick="deleteFiles()">Delete Files</button>
-        <script>
-            async function deleteFiles() {
-                    const response = await fetch("/www/index.html", {method: "DELETE"});
-                    alert("successs");
-            }
-        </script>
-    </main>
-    <footer>
-        <p>&copy; 2025 webserv project</p>
-    </footer>
-</body>
-</html>

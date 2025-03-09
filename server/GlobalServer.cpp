@@ -3,14 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   GlobalServer.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:08:17 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/23 21:08:18 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/09 12:22:00 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "../header/GlobalServer.hpp"
 
+#include <sys/wait.h>
+
+struct CGIProcess {
+    int pipe_fd;
+    int client_fd;
+    std::vector<unsigned char> outputBuffer;
+    pid_t pid;
+};
+
+std::map<int, CGIProcess> cgiProcesses;
 
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
 
@@ -531,7 +540,6 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::string methods = configLocation.getMethods();
     std::string redirect = configLocation.getRedirect();
     std::string filePath = replacePath(req.url, requestPath, root);            //map request_path to root in [location]
-    std::cout << "filePath: " << filePath << std::endl; 
 
     std::string resp;
 
@@ -551,18 +559,22 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
         return (resp);
     }
 
+    std::cout << "REQUEST STR: " << requestStr << std::endl;
+    std::cout << "REQ PRINT: " << std::endl;
+    req.print();
+
+    std::cout << "UPLOADD: " << this->upload_directory << std::endl;
     
     if (req.method == "GET" && isContainIn(methods, "GET"))
-        resp = getHandler(req, configLocation);
+        resp = getHandler(req, configServer, configLocation);
     else if (req.method == "POST" && isContainIn(methods, "POST"))
-        resp = postHandler(req, configLocation);
+        resp = postHandler(req, configServer, configLocation, this->upload_directory);
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
-        resp = deleteHandler(configLocation);
+        resp = deleteHandler(this->upload_directory);
     else
-        resp = otherHandler();
+        resp = otherHandler(configServer);
     resp[resp.size()-1] = '\0';
-
-    //std::cout << resp << std::endl;
+  
     return resp;
 }
 

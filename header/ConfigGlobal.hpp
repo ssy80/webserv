@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigGlobal.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 10:49:26 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 10:49:28 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/09 10:20:06 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #ifndef CONFIG_GLOBAL_HPP
 # define CONFIG_GLOBAL_HPP
 
@@ -26,6 +27,7 @@ class ConfigGlobal
 
         int timeout;
         int max_events;
+        std::string upload_directory;
 
     public:
         ConfigGlobal();
@@ -39,6 +41,7 @@ class ConfigGlobal
 
         const int& getTimeout() const;
         const int& getMaxEvents() const;
+        const std::string& getUploadDirectory() const;
 
 };
 
