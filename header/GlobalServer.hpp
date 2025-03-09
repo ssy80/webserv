@@ -16,7 +16,7 @@
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
-# include <fcntl.h>
+//# include <fcntl.h>
 # include <unistd.h>
 # include <string.h>
 # include <errno.h>
@@ -55,7 +55,7 @@ class GlobalServer : public AServer
         std::vector<int> listenFdsVec;          
         WebServerConfig webServerConfig;
 
-        int setNonBlocking(int fd);
+        //int setNonBlocking(int fd);
         int createAndBind(int port);
 
         void removeConnection(Connection* conn);

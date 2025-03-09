@@ -40,7 +40,7 @@ GlobalServer& GlobalServer::operator=(const GlobalServer& other)
 /* set flags to non blocking makes I/O operations on the file descriptor non-blocking, 
    meaning functions like read() and write() will return immediately rather than 
    waiting for the operation to complete*/
-int GlobalServer::setNonBlocking(int fd)
+/*int GlobalServer::setNonBlocking(int fd)
 {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1) 
@@ -56,12 +56,13 @@ int GlobalServer::setNonBlocking(int fd)
         return (-1); //exit(1);
     }
     return (0);
-}
+}*/
 
 int GlobalServer::createAndBind(int port)
 {
     int sockfd;
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    //sockfd = socket(AF_INET, SOCK_STREAM, 0);    //int sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sockfd == -1) 
     {
         std::cerr << "Error: socket create" << std::endl; 
@@ -113,11 +114,11 @@ void GlobalServer::startListeningPort(std::vector<int> uniquePortsVec)
         port = uniquePortsVec[i];
         sockfd = createAndBind(port);                                                       //bind the port to listen
 
-        if (setNonBlocking(sockfd) < 0)                                                     //set socket to non blocking 
+       /* if (setNonBlocking(sockfd) < 0)                                                     //set socket to non blocking 
         {
             std::cerr << "Error: set non blocking" << std::endl; 
             exit(1);
-        }
+        }*/
 
         if (listen(sockfd, SOMAXCONN) < 0)                                                  //set socket to listen
         {
@@ -212,16 +213,18 @@ void GlobalServer::startServer()
                 {
                     struct sockaddr_in clientAddr;
                     socklen_t clientLen = sizeof(clientAddr);
-                    int clientFd = accept(fd, (struct sockaddr *)&clientAddr, &clientLen);
+                    //int clientFd = accept(fd, (struct sockaddr *)&clientAddr, &clientLen);
+                    int clientFd = accept4(fd, (struct sockaddr *)&clientAddr, &clientLen, SOCK_NONBLOCK);
+    
                     if (clientFd < 0)                                                       // No more connections.
                     {
                         break;
                     }
-                    if (setNonBlocking(clientFd) < 0)
+                   /* if (setNonBlocking(clientFd) < 0)
                     {
                         close(clientFd);
                         continue;
-                    }
+                    }*/
                     addConnection(clientFd);
                 }
             }
@@ -308,7 +311,7 @@ void GlobalServer::startServer()
                     }
                     else
                     {
-                        conn->responseBuffer = getErrorResponse(conn->buffer, "404");
+                        conn->responseBuffer = getErrorResponse(conn->buffer, "400");
                         conn->bytesSent = 0;
                         conn->buffer.clear();
                     }
@@ -486,14 +489,21 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
             filePath = "";
     }
                                     
-    if (filePath == "")                                      //cannot find error page, send default error page 404
+    if (filePath == "")                                      //cannot find error page, send default error page
     {
         std::map<std::string, std::string> defaultErrorPageMap = configServer.getDefaultErrorPageMap();
-        it = defaultErrorPageMap.find("404");
+        it = defaultErrorPageMap.find(errorCode);
         if (it != defaultErrorPageMap.end())
         {
             filePath = it->second;
-            statusCode = "404 Not Found";
+            if (errorCode == "501")
+                statusCode = "501 Not Implemented";
+            else if (errorCode == "413")
+                statusCode = "413 Content Too Large";
+            else if (errorCode == "404")
+                statusCode = "404 Not Found";
+            else if (errorCode == "400")
+                statusCode = "400 Bad Request";
         }
     }
 
