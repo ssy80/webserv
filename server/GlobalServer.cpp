@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:08:17 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/09 13:38:56 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/09 14:30:03 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -558,7 +558,7 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
 
     if (req.version != "HTTP/1.1")                              //handle wrong version
     {
-        return (getErrorResponse(requestStr, "501"));
+        return (createErrorResponse(configServer, "505"));
     }
 
     if (!redirect.empty())                                     //handle redirect

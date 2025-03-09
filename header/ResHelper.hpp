@@ -6,12 +6,14 @@
 #include "Request.hpp"
 #include "ConfigLocation.hpp"
 #include "ConfigServer.hpp"
+#include "GlobalServer.hpp"
 #include "MIME.hpp"
 #include <sys/socket.h>
 #include <dirent.h>
 
 #define TIMEOUT 5000
 
+std::string createErrorResponse(ConfigServer& configServer, std::string errorCode);
 vector<unsigned char> readRequestFile(const string& resource);
 vector<unsigned char> readRequestCGI(const string& scriptPath);
 string getFileExtension(const string& filename);

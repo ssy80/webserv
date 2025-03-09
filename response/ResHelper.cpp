@@ -1,5 +1,4 @@
 #include "../header/ResHelper.hpp"
-#include "../header/GlobalServer.hpp"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -18,19 +17,21 @@ std::string createErrorResponse(ConfigServer& configServer, std::string errorCod
     {
         filePath = it->second;
 		if (errorCode == "403")
-			statusCode == "403 Forbidden";
+			statusCode == SC403;
         else if (errorCode == "404")
-            statusCode = "404 Not Found";
+            statusCode = SC404;
 		else if (errorCode == "405")
-			statusCode = "405 Not Allowed";
+			statusCode = SC405;
 		else if (errorCode == "406")
-			statusCode == "406 Not Acceptable";
+			statusCode == SC406;
 		else if (errorCode == "413")
-            statusCode = "413 Content Too Large";
+            statusCode = SC413;
 		else if (errorCode == "500")
-			statusCode == "500 Internal Server Error";
+			statusCode == SC500;
         else if (errorCode == "501")
-            statusCode = "501 Not Implemented";
+            statusCode = SC501;
+		else if (errorCode == "505")
+			statusCode = SC505;
     }
     else                                                      //cannot find error page, send default error page 404
     {
