@@ -17,17 +17,17 @@ std::string createErrorResponse(ConfigServer& configServer, std::string errorCod
     {
         filePath = it->second;
 		if (errorCode == "403")
-			statusCode == SC403;
+			statusCode = SC403;
         else if (errorCode == "404")
             statusCode = SC404;
 		else if (errorCode == "405")
 			statusCode = SC405;
 		else if (errorCode == "406")
-			statusCode == SC406;
+			statusCode = SC406;
 		else if (errorCode == "413")
             statusCode = SC413;
 		else if (errorCode == "500")
-			statusCode == SC500;
+			statusCode = SC500;
         else if (errorCode == "501")
             statusCode = SC501;
 		else if (errorCode == "505")
@@ -384,6 +384,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 }
 
 string getChunks(string chunks) {
+
 	std::cout << "CHUNKS: " << chunks << std::endl;
 	return "";
 }
@@ -418,10 +419,13 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 		return res;
 	}
 	
-	else if (req.headers.find("Transfer-Encoding") != req.headers.end()
+	std::cout << "HERE" << std::endl;
+	if (req.headers.find("Transfer-Encoding") != req.headers.end()
 		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
-		
-		string upload_filename = req.formFields["filename"];
+	
+		std::cout << "TRANSFERING" << std::endl;
+		//string upload_filename = req.formFields["filename"];
+		string upload_filename = "chunks.txt";
 		string upload_content = getChunks(req.files["body"]);
 		setenv("UPLOAD_FILENAME", upload_filename.c_str(), 1);
 		setenv("UPLOAD_CONTENT", upload_content.c_str(), 1);
