@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 19:52:54 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/09 10:20:57 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/09 13:36:40 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ ConfigGlobal::ConfigGlobal(){}
 ConfigGlobal::~ConfigGlobal(){}
 
 ConfigGlobal::ConfigGlobal(const ConfigGlobal& other)
-: keyValueMap(other.keyValueMap), timeout(other.timeout), max_events(other.max_events)
+: keyValueMap(other.keyValueMap), timeout(other.timeout), max_events(other.max_events), upload_directory(other.upload_directory)
 {}
 
 ConfigGlobal& ConfigGlobal::operator=(const ConfigGlobal& other)
@@ -27,6 +27,7 @@ ConfigGlobal& ConfigGlobal::operator=(const ConfigGlobal& other)
     this->keyValueMap = other.keyValueMap;
     this->timeout = other.timeout;
     this->max_events = other.max_events;
+    this->upload_directory = other.upload_directory;
     return (*this);
 }
 

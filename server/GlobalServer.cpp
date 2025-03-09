@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:08:17 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/09 12:25:26 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/09 13:38:56 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,9 @@ void GlobalServer::startServer()
     
     createEpoll();                                                                          
     startListeningPort(uniquePortsVec);
-    
+
+    this->upload_directory = configGlobal.getUploadDirectory();
+
     int max_events = configGlobal.getMaxEvents();
     struct epoll_event events[max_events];
     char buffer[READ_BUFFER];
@@ -574,8 +576,6 @@ std::string GlobalServer::handleRequest(std::string& requestStr)
     std::cout << "REQ PRINT: " << std::endl;
     req.print();
 
-    std::cout << "UPLOADD: " << this->upload_directory << std::endl;
-    
     if (req.method == "GET" && isContainIn(methods, "GET"))
         resp = getHandler(req, configServer, configLocation);
     else if (req.method == "POST" && isContainIn(methods, "POST"))

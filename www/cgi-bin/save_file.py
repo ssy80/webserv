@@ -7,7 +7,7 @@ try:
     
     form = cgi.FieldStorage()
     
-    save_path = os.path.join(os.getcwd(), "www", "tmp", file_name)
+    save_path = os.path.join(os.getcwd(), file_name)
     
     with open(save_path, "wb") as f:
         f.write(file_content)

@@ -397,9 +397,12 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 		&& !req.files.empty()
 		&& !req.formFields.empty()) {
 
-		std::cout << "UPLOAD PATH: " << uploadDirectory + req.formFields["filename"] << std::endl;
-		setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
-		setenv("UPLOAD_CONTENT", req.files["filename"].c_str(), 1);
+		string upload_filename = (uploadDirectory + "/" + req.formFields["filename"]).substr(2);
+		string upload_content = req.files["filename"];
+
+		std::cout << "uploadfilename " << upload_filename << std::endl;
+		setenv("UPLOAD_FILENAME", upload_filename.c_str(), 1);
+		setenv("UPLOAD_CONTENT", upload_content.c_str(), 1);
 
 		vector<unsigned char> file = readRequestCGI(PATH_INFO);
 		if (file.empty()) {
@@ -414,8 +417,10 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 	else if (req.headers.find("Transfer-Encoding") != req.headers.end()
 		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
 		
-		setenv("UPLOAD_FILENAME", req.formFields["filename"].c_str(), 1);
-		setenv("UPLOAD_CONTENT", getChunks(req.files["body"]).c_str(), 1);
+		string upload_filename = req.formFields["filename"];
+		string upload_content = getChunks(req.files["body"]);
+		setenv("UPLOAD_FILENAME", upload_filename.c_str(), 1);
+		setenv("UPLOAD_CONTENT", upload_content.c_str(), 1);
 		vector<unsigned char> file = readRequestCGI(PATH_INFO);
 		
 		if (file.empty()) {
@@ -434,6 +439,7 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 
 // when delete handler is called, it will delete all files in the folder
 string deleteHandler(std::string uploadDirectory) {
+	std::cout << "A: 0" << uploadDirectory << std::endl;
 	// check if directory exists
 	struct stat st;
 	if (stat(uploadDirectory.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
@@ -443,6 +449,7 @@ string deleteHandler(std::string uploadDirectory) {
 			->build()
 			.toString() + CLRF;
 	}
+	std::cout << "A: 1" << std::endl;
 
 	// delete files in directory
 	DIR *dir = opendir(uploadDirectory.c_str());
@@ -453,7 +460,7 @@ string deleteHandler(std::string uploadDirectory) {
 			->build()
 			.toString() + CLRF;
 	}
-
+	std::cout << "A: 2" << std::endl;
 	struct dirent *entry;
 	while ((entry = readdir(dir)) != NULL) {
 		string file_name = entry->d_name;
@@ -467,6 +474,7 @@ string deleteHandler(std::string uploadDirectory) {
 		struct stat st;
 		if (stat(full_path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
 			// Delete file
+			std::cout << "Deleting file: " << full_path << std::endl;
 			unlink(full_path.c_str());
 		}
 	}
