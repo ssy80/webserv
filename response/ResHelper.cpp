@@ -253,6 +253,15 @@ string filetype(const string& url){
 
 static string bonusCookie(ConfigServer& configServer, Request& req){
 	if (req.url=="/14789632"){
+		if (req.headers["Cookie"] == "session=login\r"){
+			Response res = Response::ResBuilder()
+				.sc(SC200)
+				->ct(MIME::KEY + MIME::HTML)
+				->cl(25)
+				->mc("Connection", "close")
+				->build();
+			return res.toString() + "<h1>already logged in</h1>";
+		}
 		Response res = Response::ResBuilder()
 						.sc(SC200)
 						->mc("Set-Cookie","session=login")
@@ -280,6 +289,12 @@ static string bonusCookie(ConfigServer& configServer, Request& req){
 }
 
 string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation) {
+	// cookie management for bonus
+	string bonusstr = bonusCookie(configServer, req);
+	if (!bonusstr.empty())
+		return bonusstr;
+
+
 	string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
 	
 	std::cout << "REQ URL: " << req.url << std::endl;
@@ -315,11 +330,6 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 
 	// if file is not executable, serve static page
 
-	// cookie management for bonus
-	string bonusstr = bonusCookie(configServer, req);
-	if (!bonusstr.empty())
-		return bonusstr;
-	
 	// if autoindex is true
 	if ((configLocation.getAutoIndex() == "on") && req.url[req.url.size() - 1] == '/') {
 		string tmp  = listdir(PATH_INFO);
