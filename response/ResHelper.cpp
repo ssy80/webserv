@@ -116,7 +116,7 @@ vector<unsigned char> readRequestFile(const string& resource){
 // 	}
 // }
 
-vector<unsigned char> readRequestCGI(const string& scriptPath) {
+vector<unsigned char> readRequestCGI(const string& scriptPath, char* envp[]) {
 	vector<unsigned char> output;
 	output.reserve(2048);
 
@@ -138,8 +138,8 @@ vector<unsigned char> readRequestCGI(const string& scriptPath) {
 		close(pipe_fd[1]);
 
 		char* args[] = {const_cast<char*>(scriptPath.c_str()), NULL};
-		execvp(args[0], args);
-		std::cerr << "Exec failed" << std::endl;
+		execve(args[0], args, envp);
+		std::cerr << "Exec failed: " << errno << std::endl;
 		exit(1);
 
 	} else {
@@ -312,7 +312,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 		// }
 		// return "";		// CGI response will be sent later
 
-		vector<unsigned char> file = readRequestCGI(PATH_INFO);
+		vector<unsigned char> file = readRequestCGI(PATH_INFO, NULL);
 		if (file.empty()) {
 			return createErrorResponse(configServer, "500");
 		}
@@ -383,36 +383,76 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	return res;
 }
 
-string getChunks(string chunks) {
+std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0, end = 0;
+    
+    while ((end = s.find(delimiter, start)) != std::string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + delimiter.length();
+    }
+    tokens.push_back(s.substr(start));
 
-	std::cout << "CHUNKS: " << chunks << std::endl;
-	return "";
+    return tokens;
+}
+
+std::string getChunks(std::string& chunks) {
+    std::string delimiter = "\r\n";
+    std::vector<std::string> tokens = split(chunks, delimiter);
+    
+    std::string res;
+    size_t i = 0;
+
+    while (i < tokens.size()) {
+        std::string chunkSizeHex = tokens[i];
+        if (chunkSizeHex.empty()) {
+            ++i;
+            continue;  // Skip empty tokens
+        }
+
+        int chunkSize;
+        std::stringstream ss;
+        ss << std::hex << chunkSizeHex;
+        ss >> chunkSize;
+
+        if (chunkSize == 0) break;  // End of chunks
+
+        if (++i >= tokens.size()) break;  // Prevent out-of-bounds
+
+        std::string chunkData = tokens[i].substr(0, chunkSize);  // Get exact bytes
+        std::cerr << "Chunk Data: " << chunkData << std::endl;
+        res += chunkData;
+        ++i;  // Move to the next chunk size
+    }
+
+    std::cerr << "RES: " << res << std::endl;
+    return res;
 }
 
 // post handler is used to upload 1 file through the cgi script
 string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation, std::string uploadDirectory) {
 	string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
 	
-	std::cout << "REQ URL: " << req.url << std::endl;
-	std::cout << "REQUEST PATH: " << configLocation.getRequestPath() << std::endl;
-	std::cout << "ROOT: " << configLocation.getRoot() << std::endl;
-	std::cout << "PATH_INFO: " << PATH_INFO << std::endl;	
-
 	if (req.headers["Content-Type"].find("multipart/form-data") != std::string::npos
 		&& req.url.find("save_file.py") != std::string::npos
 		&& !req.files.empty()
 		&& !req.formFields.empty()) {
 
-		mkdir(uploadDirectory.c_str(), 777);
+		mkdir(uploadDirectory.c_str(), 0777);
 		string upload_filename = (uploadDirectory + "/" + req.formFields["filename"]).substr(2);
 		string upload_content = req.files["filename"];
 
-		std::cout << upload_filename << std::endl;
-		std::cout << upload_content << std::endl;
-		setenv("UPLOAD_FILENAME", upload_filename.c_str(), 1);
-		setenv("UPLOAD_CONTENT", upload_content.c_str(), 1);
-
-		vector<unsigned char> file = readRequestCGI(PATH_INFO);
+		std::vector<std::string> envVars;
+		envVars.push_back("UPLOAD_FILENAME=" + upload_filename);
+		envVars.push_back("UPLOAD_CONTENT=" + upload_content);
+		
+		std::vector<char*> envp;
+		for (std::vector<std::string>::iterator it = envVars.begin(); it != envVars.end(); ++it) {
+			envp.push_back(const_cast<char*>(it->c_str()));
+		}
+		envp.push_back(NULL);
+		
+		vector<unsigned char> file = readRequestCGI(PATH_INFO, envp.data());
 		if (file.empty()) {
 			return createErrorResponse(configServer, "500");
 		}
@@ -422,18 +462,30 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 		return res;
 	}
 	
-	std::cout << "HERE" << std::endl;
 	if (req.headers.find("Transfer-Encoding") != req.headers.end()
-		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos) {
-	
-		std::cout << "TRANSFERING" << std::endl;
+		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos
+		&& req.url.find("save_file.py") != std::string::npos
+		&& !req.files.empty()) {
+
+		mkdir(uploadDirectory.c_str(), 0777);
+		string upload_filename = (uploadDirectory + "/" + "chunks.txt").substr(2);
 		//string upload_filename = req.formFields["filename"];
-		string upload_filename = "chunks.txt";
-		string upload_content = getChunks(req.files["body"]);
-		setenv("UPLOAD_FILENAME", upload_filename.c_str(), 1);
-		setenv("UPLOAD_CONTENT", upload_content.c_str(), 1);
-		vector<unsigned char> file = readRequestCGI(PATH_INFO);
 		
+		string test = "4\r\nWiki\r\n7\r\npedia i\r\nB\r\nn \r\n chunks.\r\n0\r\n\r\n";
+		string upload_content = getChunks(test);
+		//string upload_content = getChunks(req.files["body"]);
+		
+		std::vector<std::string> envVars;
+		envVars.push_back("UPLOAD_FILENAME=" + upload_filename);
+		envVars.push_back("UPLOAD_CONTENT=" + upload_content);
+
+		std::vector<char*> envp;
+		for (std::vector<std::string>::iterator it = envVars.begin(); it != envVars.end(); ++it) {
+			envp.push_back(const_cast<char*>(it->c_str()));
+		}
+		envp.push_back(NULL);
+
+		vector<unsigned char> file = readRequestCGI(PATH_INFO, envp.data());
 		if (file.empty()) {
 			return createErrorResponse(configServer, "500");
 		}
