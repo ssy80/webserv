@@ -6,10 +6,11 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:08:17 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/09 12:22:00 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/09 12:25:26 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "../header/GlobalServer.hpp"
 #include <sys/wait.h>
 
 struct CGIProcess {
