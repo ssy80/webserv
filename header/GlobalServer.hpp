@@ -34,7 +34,9 @@
 # include "MIME.hpp"
 
 # include <algorithm>
+# include <exception>
 
+using std::exception;
 
 # define READ_BUFFER 1024
 

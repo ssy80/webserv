@@ -24,7 +24,9 @@
 # include <fstream>
 # include <sys/stat.h>
 # include <sys/time.h>
+# include <exception>
 
+using std::exception;
 
 std::string trim(const std::string& str);
 

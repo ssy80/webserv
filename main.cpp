@@ -72,14 +72,16 @@ int main(int argc, char**argv)
     }
 
     WebServerConfig webServerConfig;
-    webServerConfig.parseWebServerConfigFile(configFile);                                                    //parse the config file
-
-    displayParseConfig(webServerConfig);
-
-    AServer *globalServer = new GlobalServer(webServerConfig);
-    // AServer *globalServer = new YSServer();
-    globalServer->startServer();
-    delete globalServer;
-    
-    return (0);
+    try{
+        webServerConfig.parseWebServerConfigFile(configFile);                                                    //parse the config file
+        displayParseConfig(webServerConfig);
+        AServer *globalServer = new GlobalServer(webServerConfig);
+        // AServer *globalServer = new YSServer();
+        globalServer->startServer();
+        delete globalServer;
+        return (0);
+    }
+    catch(exception &e){
+        return 1;
+    }
 }

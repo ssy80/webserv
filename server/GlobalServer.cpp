@@ -66,14 +66,14 @@ int GlobalServer::createAndBind(int port)
     if (sockfd == -1) 
     {
         std::cerr << "Error: socket create" << std::endl; 
-        exit(1);
+        throw exception();
     }
 
     int opt = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)    // Allow reuse of local addresses.
     {
         std::cerr << "Error: setsockopt" << std::endl; 
-        exit(1);
+        throw exception();
     }
 
     struct sockaddr_in addr;
@@ -85,7 +85,7 @@ int GlobalServer::createAndBind(int port)
     if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == -1) 
     {
         std::cerr << "Error: bind listen port" << std::endl; 
-        exit(1);
+        throw exception();
     }
     return sockfd;
 }
@@ -97,7 +97,7 @@ void GlobalServer::createEpoll()
     if (this->epoll_fd < 0) 
     {
         std::cerr << "Error: epoll_create" << std::endl; 
-        exit(1);
+        throw exception();
     }
 }
 
@@ -123,7 +123,7 @@ void GlobalServer::startListeningPort(std::vector<int> uniquePortsVec)
         if (listen(sockfd, SOMAXCONN) < 0)                                                  //set socket to listen
         {
             std::cerr << "Error: set listen port" << std::endl; 
-            exit(1);
+            throw exception();
         }
         else
             this->listenFdsVec.push_back(sockfd);                                           //add to listen 
@@ -136,7 +136,7 @@ void GlobalServer::startListeningPort(std::vector<int> uniquePortsVec)
         if (epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, sockfd, &event) < 0) 
         {
             std::cerr << "Error: epoll_ctl add listen socket" << std::endl; 
-            exit(1);
+            throw exception();
         }
         std::cout << "Listening on port: " << port << std::endl;
     }
@@ -188,7 +188,7 @@ void GlobalServer::startServer()
         if (nunEventFds < 0)
         {
             std::cerr << "Error: epoll_wait" << std::endl; 
-            exit(1);
+            throw exception();
         }
 
     std::cerr << "connections: " << connections.size() << std::endl;

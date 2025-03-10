@@ -285,20 +285,20 @@ std::string readFile(std::string configFile)
     if (stat(configFile.c_str(), &info) != 0) 
     {
         std::cerr << "Error: Cannot access config file" << std::endl;
-        exit(1);
+        throw exception();
     }
       
     if (S_ISDIR(info.st_mode))                                              // Check if it's a directory
     {
         std::cerr << "Error: config file is a directory" << std::endl;
-        exit(1);
+        throw exception();
     }
     
     std::ifstream in(configFile.c_str());
     if (!in) 
     {
         std::cerr << "Error: Cannot open file!" << std::endl;
-        exit(1);
+        throw exception();
     }
 
     while (std::getline(in, line)) 

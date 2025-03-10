@@ -72,7 +72,7 @@ void ConfigLocation::parseConfigLocation(std::string configLocationStr)
     if (!validate())
     {
         std::cerr << "Error: invalid [location] config" << std::endl;
-        exit(1);
+        throw exception();
     }
 }
 

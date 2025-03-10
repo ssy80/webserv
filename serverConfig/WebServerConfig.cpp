@@ -46,7 +46,7 @@ void WebServerConfig::parseWebServerConfigFile(std::string configFile)
     if (configServerStrVec.size() == 0)
     {
         std::cerr << "Error: invalid config [server]" << std::endl;
-        exit(1);
+        throw exception();
     }
 
     std::vector<std::string>::iterator it;
@@ -60,7 +60,7 @@ void WebServerConfig::parseWebServerConfigFile(std::string configFile)
     if (!validate())
     {
         std::cerr << "Error: invalid config [server]" << std::endl;
-        exit(1);
+        throw exception();
     }
 }
 

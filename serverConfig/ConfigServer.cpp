@@ -68,7 +68,7 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
     if (this->keyValueMap.size() == 0)
     {
         std::cerr << "Error: invalid config [server]" << std::endl;
-        exit(1);
+        throw exception();
     }
 
     //set attributes
@@ -89,7 +89,7 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
             else
             {
                 std::cerr << "Error: invalid listen port" << std::endl;
-                exit(1);
+                throw exception();
             }
         }
         else if (itServer->first == "max_body_size")
@@ -101,7 +101,7 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
             else
             {
                 std::cerr << "Error: invalid max_body_size" << std::endl;
-                exit(1);
+                throw exception();
             }
         }
     }
@@ -119,7 +119,7 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
     if (!validate())
     {
         std::cerr << "Error: invalid config [server]" << std::endl;
-        exit(1);
+        throw exception();
     }
 }
 

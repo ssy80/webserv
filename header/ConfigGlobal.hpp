@@ -18,7 +18,9 @@
 # include <iostream>
 # include <sstream>
 # include "utilConfig.hpp"
+# include <exception>
 
+using std::exception;
 
 class ConfigGlobal
 {
@@ -43,6 +45,10 @@ class ConfigGlobal
         const int& getMaxEvents() const;
         const std::string& getUploadDirectory() const;
 
+        class ParseErrException : public exception	{
+			public:
+				virtual const char *what() const throw();
+		};
 };
 
 

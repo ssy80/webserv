@@ -22,8 +22,9 @@
 # include <sstream>
 # include <limits>
 # include <set>
+# include <exception>
 
-
+using std::exception;
 
 class WebServerConfig
 {

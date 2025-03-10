@@ -38,7 +38,7 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
     if (this->keyValueMap.size() == 0)
     {
         std::cerr << "Error: invalid config [global]" << std::endl;
-        exit(1);
+        throw ParseErrException();
     }
 
     std::map<std::string, std::string>::iterator it;
@@ -54,13 +54,13 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
         else
         {
             std::cerr << "Error: invalid timeout" << std::endl;
-            exit(1);
+            throw ParseErrException();
         }
     }
     else
     {
         std::cerr << "Error: invalid config [global]" << std::endl;
-        exit(1);
+        throw ParseErrException();
     }
 
     it = this->keyValueMap.find("max_events");
@@ -73,18 +73,18 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
         else
         {
             std::cerr << "Error: invalid max_events" << std::endl;
-            exit(1);
+            throw ParseErrException();
         }
         if (this->max_events <= 0)
         {
             std::cerr << "Error: invalid max_events" << std::endl;
-            exit(1);
+            throw ParseErrException();
         }
     }
     else
     {
         std::cerr << "Error: invalid config [global]" << std::endl;
-        exit(1);
+        throw ParseErrException();
     }
 
     it = this->keyValueMap.find("upload_directory");
@@ -95,7 +95,7 @@ void ConfigGlobal::parseConfigGlobal(std::string configGlobalStr)
     else
     {
         std::cerr << "Erorr: invalid config [global]" << std::endl;
-        exit(1);
+        throw ParseErrException();
     }
 }
 
@@ -117,4 +117,9 @@ const int& ConfigGlobal::getMaxEvents() const
 const std::string& ConfigGlobal::getUploadDirectory() const
 {
     return (this->upload_directory);
+}
+
+// exception
+const char *ConfigGlobal::ParseErrException::what() const throw(){
+	return "Parsing error in config file";
 }

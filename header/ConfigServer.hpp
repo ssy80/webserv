@@ -20,6 +20,9 @@
 # include <iostream>
 # include "utilConfig.hpp"
 # include <sstream>
+# include <exception>
+
+using std::exception;
 
 # define DEFAULT_CONFIG "./config/default.config"
 

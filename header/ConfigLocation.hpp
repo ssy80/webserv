@@ -17,6 +17,9 @@
 # include <cstddef>
 # include <iostream>
 # include "utilConfig.hpp"
+# include <exception>
+
+using std::exception;
 
 class ConfigLocation
 {

@@ -59,3 +59,6 @@ re: fclean all
 
 run: ${NAME}
 	./${NAME}
+
+v : ${NAME}
+	valgrind ./${NAME}
