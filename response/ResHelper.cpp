@@ -1,9 +1,6 @@
 #include "../header/ResHelper.hpp"
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/epoll.h>
 
 std::string createErrorResponse(ConfigServer& configServer, std::string errorCode)
 {
@@ -443,8 +440,14 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 
 		mkdir(uploadDirectory.c_str(), 0777);
 		string upload_filename = (uploadDirectory + "/" + req.formFields["filename"]).substr(2);
-		string upload_content = req.files["filename"];
+		
+		int idxEnd = req.files["filename"].size() - 3;
+		string upload_content = req.files["filename"].substr(2, idxEnd);
 
+		if (upload_content.size() > 100) {
+			return createErrorResponse(configServer, "413");
+		}
+		
 		std::vector<std::string> envVars;
 		envVars.push_back("UPLOAD_FILENAME=" + upload_filename);
 		envVars.push_back("UPLOAD_CONTENT=" + upload_content);
@@ -474,9 +477,12 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 		string upload_filename = (uploadDirectory + "/" + "chunks.txt").substr(2);
 		//string upload_filename = req.formFields["filename"];
 		
-		string test = "4\r\nWiki\r\n7\r\npedia i\r\nB\r\nn \r\n chunkQ.\r\n0\r\n\r\n";
-		string upload_content = getChunks(test);
-		//string upload_content = getChunks(req.files["body"]);
+		// TEST STRING
+		//string test = "4\r\nWiki\r\n7\r\npedia i\r\nB\r\nn \r\n chunkQ.\r\n0\r\n\r\n";
+		//string upload_content = getChunks(test);
+		
+		// ACTUAL STRING
+		string upload_content = getChunks(req.files["body"]);
 		if (upload_content.empty()) {
 			return createErrorResponse(configServer, "400");
 		}
