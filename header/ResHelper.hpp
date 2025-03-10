@@ -15,7 +15,7 @@
 
 std::string createErrorResponse(ConfigServer& configServer, std::string errorCode);
 vector<unsigned char> readRequestFile(const string& resource);
-vector<unsigned char> readRequestCGI(const string& scriptPath);
+vector<unsigned char> readRequestCGI(const string& scriptPath, char* envp[]);
 string getFileExtension(const string& filename);
 string filetype(const string& url);
 string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation);

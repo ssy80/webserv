@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 import cgi, sys, os
 
-file_name = os.getenv("UPLOAD_FILENAME", "default.txt")
-file_content = os.environb.get(b"UPLOAD_CONTENT", b"default")  
+file_name = os.getenv("UPLOAD_FILENAME")
+file_content = os.getenv("UPLOAD_CONTENT").encode("utf-8")    
 save_path = os.path.join(os.getcwd(), file_name)
 
 try:    
@@ -20,7 +20,7 @@ try:
     print(body)
 
 except:
-    body = "<h2>Error: Unable to save file</h2>" + file_name
+    body = "<h2>Error: Unable to save file</h2>" + save_path
     content_length = len(body.encode("utf-8"))
     
     print("HTTP/1.1 500 Internal Server Error")
