@@ -341,7 +341,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	}
 
 	// getting index page
-	if (req.url == "/") {
+	if (req.url[req.url.size() - 1] == '/') {
 		vector<unsigned char> file = readRequestFile(PATH_INFO + configLocation.getIndex());
 		if (file.empty()) {
 			return createErrorResponse(configServer, "404");
