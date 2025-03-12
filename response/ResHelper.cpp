@@ -26,7 +26,7 @@ string createErrorResponse(ConfigServer& configServer, string errorCode){
 		statusCode = SC505;
 	// find error page
 	it = errorPageMap.find(errorCode);
-	if (it != errorPageMap.end() || readServerFile(it->second) != "")
+	if (it != errorPageMap.end() && readServerFile(it->second) != "")
 		filePath = it->second;
 	//cannot find error page, send default error page 404
 	else{
