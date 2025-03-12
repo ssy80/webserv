@@ -2,57 +2,58 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-std::string createErrorResponse(ConfigServer& configServer, std::string errorCode)
-{
-	std::map<std::string, std::string> errorPageMap = configServer.getErrorPageMap();
-    std::string filePath;
-    std::map<std::string, std::string>::iterator it;
-    std::string statusCode;
-
-    it = errorPageMap.find(errorCode);                         //find error page
-    if (it != errorPageMap.end())
-    {
-        filePath = it->second;
-		if (errorCode == "403")
-			statusCode = SC403;
-        else if (errorCode == "404")
-            statusCode = SC404;
-		else if (errorCode == "405")
-			statusCode = SC405;
-		else if (errorCode == "406")
-			statusCode = SC406;
-		else if (errorCode == "413")
-            statusCode = SC413;
-		else if (errorCode == "500")
-			statusCode = SC500;
-        else if (errorCode == "501")
-            statusCode = SC501;
-		else if (errorCode == "505")
-			statusCode = SC505;
-    }
-    else                                                      //cannot find error page, send default error page 404
-    {
-        std::map<std::string, std::string> defaultErrorPageMap = configServer.getDefaultErrorPageMap();
-        it = defaultErrorPageMap.find("404");
-        if (it != defaultErrorPageMap.end())
-        {
-            filePath = it->second;
-            statusCode = SC404;
-        }
-    }
-
-    //read file
-    std::string output; 
-    std::string file = readServerFile(filePath);
-    Response res = Response::ResBuilder()
-									.sc(statusCode)
-                                    ->ct(MIME::KEY + MIME::HTML)
-									->mc("Connection:", "close")
-									->cl(file.size())
-									->build();
-    output = res.toString();
-    output = output + file + '\0';
-    return (output);
+string createErrorResponse(ConfigServer& configServer, string errorCode){
+	map<string, string> errorPageMap = configServer.getErrorPageMap();
+	string filePath = "";
+	map<string, string>::iterator it;
+	string statusCode = SC404;
+	// convert errorcode to statuscode
+	if (errorCode == "403")
+		statusCode = SC403;
+	else if (errorCode == "404")
+		statusCode = SC404;
+	else if (errorCode == "405")
+		statusCode = SC405;
+	else if (errorCode == "406")
+		statusCode = SC406;
+	else if (errorCode == "413")
+		statusCode = SC413;
+	else if (errorCode == "500")
+		statusCode = SC500;
+	else if (errorCode == "501")
+		statusCode = SC501;
+	else if (errorCode == "505")
+		statusCode = SC505;
+	// find error page
+	it = errorPageMap.find(errorCode);
+	if (it != errorPageMap.end() || readServerFile(it->second) != "")
+		filePath = it->second;
+	//cannot find error page, send default error page 404
+	else{
+		map<string, string> defaultErrorPageMap = configServer.getDefaultErrorPageMap();
+		it = defaultErrorPageMap.find("404");
+		// if cannot find default error page, create on the spot
+		if (it == defaultErrorPageMap.end()){
+			return Response::ResBuilder()
+							.sc(statusCode)
+							->ct(MIME::KEY + MIME::HTML)
+							->mc("Connection:", "close")
+							->cl(strlen(SC404))
+							->build()
+							.toString() + SC404 + '\0';
+		}
+		filePath = it->second;
+		statusCode = SC404;
+	}	
+	//read file
+  string file = readServerFile(filePath);
+	Response res = Response::ResBuilder()
+								.sc(statusCode)
+								->ct(MIME::KEY + MIME::HTML)
+								->mc("Connection:", "close")
+								->cl(file.size())
+								->build();
+	return res.toString() + file  + '\0';
 }
 
 vector<unsigned char> readRequestFile(const string& resource){
@@ -250,7 +251,7 @@ string filetype(const string& url){
 
 static string bonusCookie(ConfigServer& configServer, Request& req){
 	if (req.url=="/14789632"){
-		if (req.headers["Cookie"] == "session=login\r"){
+		if (req.headers["Cookie"].find("session=login") != string::npos){
 			Response res = Response::ResBuilder()
 				.sc(SC200)
 				->ct(MIME::KEY + MIME::HTML)
@@ -269,9 +270,7 @@ static string bonusCookie(ConfigServer& configServer, Request& req){
 		return res.toString() + "<h1>login successful</h1>";
 	}
 	if (req.url == "/secretpage"){
-		req.print();
-		cout << "this is cookie " << req.headers["Cookie"] << endl;
-		if (req.headers["Cookie"] != "session=login\r"){
+		if (req.headers["Cookie"].find("session=login") == string::npos){
 			return createErrorResponse(configServer, "403");
 		}
 		return Response::ResBuilder()
