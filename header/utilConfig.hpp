@@ -28,6 +28,17 @@
 
 using std::exception;
 
+struct Connection 
+{
+    int fd;                    
+    std::string buffer; 
+    long lastActive;
+    std::string responseBuffer;
+    size_t bytesSent;
+    int cgiOutFd;
+    pid_t cgiPid;
+};
+
 std::string trim(const std::string& str);
 
 int stringToInt(const std::string& str);
@@ -53,6 +64,8 @@ bool isValidInt(std::string valueStr);
 bool isValidPort(std::string portStr);
 
 std::string readFile(std::string configFile);
+
+bool isDir(std::string filepath);
 
 std::vector<std::string> splitHost(std::string hostStr);
 

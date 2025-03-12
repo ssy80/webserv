@@ -310,6 +310,23 @@ std::string readFile(std::string configFile)
     return (fileStr);
 }
 
+bool isDir(std::string filepath)
+{
+    struct stat info;
+
+    if (stat(filepath.c_str(), &info) != 0) 
+    {
+        return (false);
+    }
+      
+    if (S_ISDIR(info.st_mode))                                              // Check if it's a directory
+    {
+        return (true);
+    }
+    
+    return (false);
+}
+
 /*split "Host: example.com:8080" by :*/
 std::vector<std::string> splitHost(std::string hostStr)
 {

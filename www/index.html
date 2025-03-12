@@ -31,33 +31,31 @@
                         height: 25%;
 				}
     </style>
+      <script>
+        async function loadTime() {
+            const response = await fetch('/cgi-bin/time.py');
+            if (!response.ok) throw new Error("Failed to load");
+            const text = await response.text();
+            document.getElementById('server-time').innerHTML = text;
+        }
+       
+    </script>
+
 </head>
-<body>
+<body onload="loadTime()">
     <header>
         <h1>Welcome to Webserv</h1>
     </header>
     <main>
+        <div>
+            <a href="/images/">images folder</a>
+            |
+            <a href="/upload/">upload folder</a>
+            |
+            <a href="/cgi-bin/">cgi-bin</a>
+        </div>
         <div id="server-time">Loading server time...</div>
-        <script>
-            async function loadTime() {
-                const response = await fetch('/cgi-bin/time.py');
-                if (!response.ok) throw new Error("Failed to load");
-                const text = await response.text();
-                document.getElementById('server-time').innerHTML = text;
-            }
-            loadTime();
-        </script>
-    
-        <div id="unix-time">Loading unix time...</div>
-        <script>
-            async function loadUnixTime() {
-                const response = await fetch('/cgi-bin/time2.cgi');
-                if (!response.ok) throw new Error("Failed to load");
-                const text = await response.text();
-                document.getElementById('unix-time').innerHTML = text;
-            }
-            loadUnixTime();
-        </script>
+      
 
         <img src="/images/cat.gif" alt="cat" class="center" />
 

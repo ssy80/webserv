@@ -113,7 +113,7 @@ vector<unsigned char> readRequestFile(const string& resource){
 // 	}
 // }
 
-vector<unsigned char> readRequestCGI(const string& scriptPath, char* envp[]) {
+/*vector<unsigned char> readRequestCGI(const string& scriptPath, char* envp[]) {
 	vector<unsigned char> output;
 	output.reserve(2048);
 
@@ -159,7 +159,7 @@ vector<unsigned char> readRequestCGI(const string& scriptPath, char* envp[]) {
 		waitpid(pid, NULL, 0);
 		return output;
 	}
-}
+}*/
 
 string getFileExtension(const string& filename) {
 	// Find the last occurrence of '.'
@@ -301,7 +301,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	}
 	
 	// if file is executable, serve cgi
-	struct stat st;
+	/*struct stat st;
 	if (stat(PATH_INFO.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) != 0 && !S_ISDIR(st.st_mode)) {
 		// int cgiPipeFd = readRequestCGI(PATH_INFO, clientFd);
 		// if (cgiPipeFd == -1) {
@@ -317,7 +317,7 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 		string res;
 		res.insert(res.end(), file.begin(), file.end());
 		return res;
-	}
+	}*/
 
 	// if file is not executable, serve static page
 
@@ -393,7 +393,7 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
     return tokens;
 }
 
-std::string getChunks(std::string& chunks) {
+/*std::string getChunks(std::string& chunks) {
 	std::cout << "GETCHUNKS: " << chunks << std::endl;
 	size_t i = 0;
 	string res;
@@ -427,10 +427,10 @@ std::string getChunks(std::string& chunks) {
 
     std::cerr << "RES: " << res << std::endl;
     return res;
-}
+}*/
 
 // post handler is used to upload 1 file through the cgi script
-string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation, std::string uploadDirectory) {
+/*string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation, std::string uploadDirectory) {
 	string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
 	
 	if (req.headers["Content-Type"].find("multipart/form-data") != std::string::npos
@@ -510,7 +510,7 @@ string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& con
 	else {
 		return createErrorResponse(configServer, "405");
 	}
-}
+}*/
 
 // when delete handler is called, it will delete all files in the folder
 string deleteHandler(std::string uploadDirectory) {

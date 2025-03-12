@@ -48,16 +48,7 @@
             loadTime();
         </script>
     
-        <div id="unix-time">Loading unix time...</div>
-        <script>
-            async function loadUnixTime() {
-                const response = await fetch('/cgi-bin/time2.cgi');
-                if (!response.ok) throw new Error("Failed to load");
-                const text = await response.text();
-                document.getElementById('unix-time').innerHTML = text;
-            }
-            loadUnixTime();
-        </script>
+
 
         <img src="/cgi-bin/image.py" alt="image" class="center" />
         <img src="/images/cat.gif" alt="cat" class="center" />
