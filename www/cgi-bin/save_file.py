@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 import cgi, sys, os
 
-file_name = os.getenv("UPLOAD_FILENAME", "default.txt")
-file_content = os.environb.get(b"UPLOAD_CONTENT", b"default")  
+file_name = os.getenv("UPLOAD_FILENAME")
+file_content = os.environb.get(b"UPLOAD_CONTENT")  
 save_path = os.path.join(os.getcwd(), file_name)
 
 try:    

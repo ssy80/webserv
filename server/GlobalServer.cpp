@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:08:17 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/09 14:30:03 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/13 15:13:32 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -767,14 +767,15 @@ void GlobalServer::handleGetCGI(std::string& filePath, Connection* conn)
 
         // Execute the CGI script.
         extern char **environ;  
-        std::string prog = "/bin/python3";
-		char* program =  const_cast<char*>(prog.c_str());
-        char* args[] = { program, const_cast<char*>("-u"), const_cast<char*>(filePath.c_str()), NULL };
-
-    std::cerr << "args[0]: " << args[0] << std::endl;
-    std::cerr << "args[1]: " << args[1] << std::endl;
-    std::cerr << "args[2]: " << args[2] << std::endl;
-		execve(program, args, environ);
+        //std::string prog = "/bin/python3";
+		//char* program =  const_cast<char*>(prog.c_str());
+        //char* args[] = { program, const_cast<char*>("-u"), const_cast<char*>(filePath.c_str()), NULL };
+    
+        char* args[] = {const_cast<char*>(filePath.c_str()), NULL};
+    // std::cerr << "args[0]: " << args[0] << std::endl;
+    // std::cerr << "args[1]: " << args[1] << std::endl;
+    // std::cerr << "args[2]: " << args[2] << std::endl;
+		execve(args[0], args, environ);
         perror("execve");
         exit(1);
     }

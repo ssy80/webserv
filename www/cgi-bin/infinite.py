@@ -2,5 +2,4 @@
 
 b=""
 while True:
-	#print("1")
 	b = b + "a"
