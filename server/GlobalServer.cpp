@@ -727,8 +727,10 @@ std::cerr << "filePath: " << filePath << std::endl;
         postCgiHandler(req, configServer, configLocation, this->upload_directory, conn);
         return ("");
     }
-    else if (req.method == "GET" && isContainIn(methods, "GET"))
+    else if (req.method == "GET" && isContainIn(methods, "GET")){
         resp = getHandler(req, configServer, configLocation);
+        resp[resp.length()-1] = '\0';
+    }
     //else if (req.method == "POST" && isContainIn(methods, "POST"))
     //    resp = postHandler(req, configServer, configLocation, this->upload_directory);
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
