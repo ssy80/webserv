@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 10:49:41 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/01 20:14:13 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/15 09:41:34 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,13 @@
 
 # include <vector>
 # include <map>
-# include "ConfigLocation.hpp"
 # include <cstddef>
 # include <iostream>
-# include "utilConfig.hpp"
 # include <sstream>
 # include <exception>
+
+# include "utilConfig.hpp"
+# include "ConfigLocation.hpp"
 
 using std::exception;
 
@@ -60,8 +61,6 @@ class ConfigServer
         const std::map<std::string, std::string>& getErrorPageMap() const;
         const std::map<std::string, std::string>& getDefaultErrorPageMap() const;
         
-        
-
 };
 
 

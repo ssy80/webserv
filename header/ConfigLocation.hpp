@@ -9,6 +9,7 @@
 /*   Updated: 2025/02/22 10:49:56 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #ifndef CONFIG_LOCATION_HPP
 # define CONFIG_LOCATION_HPP
 
@@ -16,8 +17,9 @@
 # include <set>
 # include <cstddef>
 # include <iostream>
-# include "utilConfig.hpp"
 # include <exception>
+
+# include "utilConfig.hpp"
 
 using std::exception;
 

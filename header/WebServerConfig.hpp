@@ -9,20 +9,22 @@
 /*   Updated: 2025/02/22 10:55:01 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #ifndef WEBSERVER_CONFIG_HPP
 # define WEBSERVER_CONFIG_HPP
 
 # include <vector>
-# include "ConfigGlobal.hpp"
-# include "ConfigServer.hpp"
 # include <iostream>
 # include <fstream>
 # include <cstdlib>
-# include "utilConfig.hpp"
 # include <sstream>
 # include <limits>
 # include <set>
 # include <exception>
+
+# include "ConfigServer.hpp"
+# include "utilConfig.hpp"
+# include "ConfigGlobal.hpp"
 
 using std::exception;
 
@@ -32,8 +34,6 @@ class WebServerConfig
         ConfigGlobal configGlobal;
         std::vector<ConfigServer> configServerVec;
 
-        std::string getGlobalStr(std::string configStr);
-        std::vector<std::string> getServerStr(std::string configFileStr);
         bool validate();
 
     public:
@@ -47,6 +47,7 @@ class WebServerConfig
 
         std::vector<int> getUniquePortsVec();
         void parseWebServerConfigFile(std::string configFile);
+
 };
 
 

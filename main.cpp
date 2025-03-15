@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 10:39:47 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/03 11:32:07 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/15 09:14:03 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@ void displayParseConfig(WebServerConfig webServerConfig)
     {
         std::cout << "[server]" << endl;                                                           
         ConfigServer configServer = (*it);                                                               // get the sever object
-        //printMap(configServer.getKeyValueMap());                                                        // get key/value for each server
         std::cout << "listen:" << configServer.getListenPort() << std::endl;
         std::cout << "max_body_size:" << configServer.getMaxBodySize() << std::endl;
         std::cout << "server_name:" << configServer.getServerName() << std::endl;
@@ -45,7 +44,6 @@ void displayParseConfig(WebServerConfig webServerConfig)
         {
             std::cout << "[location]" << endl;
             ConfigLocation configLocation = (*locationIt);
-            //printMap(configLocation.getKeyValueMap());                                                    //key/value for each [location]
             std::cout << "autoindex:" << configLocation.getAutoIndex() << std::endl;
             std::cout << "index:" << configLocation.getIndex() << std::endl;
             std::cout << "methods:" << configLocation.getMethods() << std::endl;
@@ -72,16 +70,15 @@ int main(int argc, char**argv)
     }
 
     WebServerConfig webServerConfig;
-    try{
+    try {
         webServerConfig.parseWebServerConfigFile(configFile);                                                    //parse the config file
         displayParseConfig(webServerConfig);
         AServer *globalServer = new GlobalServer(webServerConfig);
-        // AServer *globalServer = new YSServer();
         globalServer->startServer();
         delete globalServer;
         return (0);
     }
-    catch(exception &e){
-        return 1;
+    catch (exception &e) {
+        return (1);
     }
 }

@@ -9,32 +9,32 @@
 /*   Updated: 2025/02/23 21:07:57 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #ifndef GLOBAL_SERVER_HPP
 # define GLOBAL_SERVER_HPP
 
 # include <sys/epoll.h>
 # include <sys/socket.h>
+# include <sys/wait.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
-# include <fcntl.h>
 # include <unistd.h>
 # include <string.h>
 # include <errno.h>
 # include <iostream>
-# include "WebServerConfig.hpp"
 # include <cstdlib>
 # include <limits>
 # include <cstring>
-# include "AServer.hpp"
+# include <algorithm>
+# include <exception>
 
+# include "AServer.hpp"
+# include "WebServerConfig.hpp"
 # include "Request.hpp"
 # include "RequestParser.hpp"
 # include "Response.hpp"
 # include "ResHelper.hpp"
 # include "MIME.hpp"
-
-# include <algorithm>
-# include <exception>
 
 using std::exception;
 

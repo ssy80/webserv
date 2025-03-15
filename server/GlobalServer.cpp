@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "../header/GlobalServer.hpp"
-#include <sys/wait.h>
 
 struct CGIProcess {
     int pipe_fd;

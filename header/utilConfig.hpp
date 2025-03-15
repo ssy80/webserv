@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #ifndef UTILCONFIG_HPP
 # define UTILCONFIG_HPP
 
@@ -86,6 +85,5 @@ class InvalidStrToIntException: public std::exception
     public:
         const char* what(void) const throw();
 };
-
 
 #endif

@@ -17,8 +17,9 @@
 # include <cstddef>
 # include <iostream>
 # include <sstream>
-# include "utilConfig.hpp"
 # include <exception>
+
+# include "utilConfig.hpp"
 
 using std::exception;
 
@@ -50,7 +51,5 @@ class ConfigGlobal
 				virtual const char *what() const throw();
 		};
 };
-
-
 
 #endif

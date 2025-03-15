@@ -9,6 +9,7 @@
 /*   Updated: 2025/02/22 19:53:08 by ssian            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../header/ConfigLocation.hpp"
 
 ConfigLocation::ConfigLocation()
