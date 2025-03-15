@@ -58,7 +58,7 @@ string createErrorResponse(ConfigServer& configServer, string errorCode){
 		statusCode = SC404;
 	}	
 	//read file
-  string file = readServerFile(filePath);
+  	string file = readServerFile(filePath);
 	Response res = Response::ResBuilder()
 								.sc(statusCode)
 								->ct(MIME::KEY + MIME::HTML)
@@ -175,13 +175,9 @@ vector<unsigned char> readRequestFile(const string& resource){
 }*/
 
 string getFileExtension(const string& filename) {
-	// Find the last occurrence of '.'
 	size_t dotPos = filename.find_last_of('.');
-	// If no dot is found or it's the last character, return an empty string
-	if (dotPos == std::string::npos || dotPos == filename.length() - 1) {
-			return "";
-	}
-	// Return the substring from the dot to the end
+	if (dotPos == std::string::npos || dotPos == filename.length() - 1)
+		return "";
 	return filename.substr(dotPos + 1);
 }
 
@@ -311,27 +307,6 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 		return createErrorResponse(configServer, "404");
 	}
 	
-	// if file is executable, serve cgi
-	/*struct stat st;
-	if (stat(PATH_INFO.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) != 0 && !S_ISDIR(st.st_mode)) {
-		// int cgiPipeFd = readRequestCGI(PATH_INFO, clientFd);
-		// if (cgiPipeFd == -1) {
-			// return createErrorResponse(configServer, "500");
-		// }
-		// return "";		// CGI response will be sent later
-
-		vector<unsigned char> file = readRequestCGI(PATH_INFO, NULL);
-		if (file.empty()) {
-			return createErrorResponse(configServer, "500");
-		}
-		
-		string res;
-		res.insert(res.end(), file.begin(), file.end());
-		return res;
-	}*/
-
-	// if file is not executable, serve static page
-
 	// if autoindex is true
 	if ((configLocation.getAutoIndex() == "on") && req.url[req.url.size() - 1] == '/') {
 		string tmp  = listdir(PATH_INFO);
