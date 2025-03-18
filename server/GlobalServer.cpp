@@ -691,8 +691,8 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
 
     std::string filePath = replacePath(req.url, requestPath, root);            //map request_path to root in [location]
 
-std::cerr << "requestPath: " << requestPath << std::endl;
-std::cerr << "filePath: " << filePath << std::endl;
+    std::cerr << "requestPath: " << requestPath << std::endl;
+    std::cerr << "filePath: " << filePath << std::endl;
 
     std::string resp = "";
 
@@ -723,13 +723,14 @@ std::cerr << "filePath: " << filePath << std::endl;
     }
     else if (req.method == "POST" && isContainIn(methods, "POST"))
     {
-        if (!(req.url == "/cgi-bin/upload" || req.url == "/cgi-bin/upload/"))
-          return createErrorResponse(configServer, "404");
-        if (req.headers["Content-Type"].find("multipart/form-data") == std::string::npos)
+        if (req.url == "/cgi-bin/save_file.py"){
+          std::cerr << "--cgi post request--" << std::endl;
+          postCgiHandler(req, configServer, configLocation, this->upload_directory, conn);
+          return ("");
+        }
+        if (req.url[req.url.length()-1] != '/' || req.headers["Content-Type"].find("multipart/form-data") == std::string::npos)
           return createErrorResponse(configServer, "422");
-        std::cerr << "--cgi post request--" << std::endl;
-        postCgiHandler(req, configServer, configLocation, this->upload_directory, conn);
-        return ("");
+        return postUploadHandler(req, configServer, configLocation);
     }
     else if (req.method == "GET" && isContainIn(methods, "GET")){
         resp = getHandler(req, configServer, configLocation);

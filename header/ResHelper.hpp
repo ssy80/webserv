@@ -27,13 +27,12 @@
 
 std::string createErrorResponse(ConfigServer& configServer, std::string errorCode);
 vector<unsigned char> readRequestFile(const string& resource);
-vector<unsigned char> readRequestCGI(const string& scriptPath, char* envp[]);
 string getFileExtension(const string& filename);
 string filetype(const string& url);
 string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation);
-string postHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation, std::string uploadDirectory);
 string deleteHandler(std::string uploadDirectory);
 string otherHandler(ConfigServer& configServer);
 string listdir(const string& path);
+string postUploadHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation);
 
 #endif

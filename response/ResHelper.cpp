@@ -369,3 +369,29 @@ string listdir(const string& path){
   closedir(dir);
 	return res;
 }
+
+string postUploadHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation){
+  // (void) configServer;
+  (void) configLocation;
+  string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
+  cout << PATH_INFO << endl;
+  struct stat sb;
+  if (stat(PATH_INFO.c_str(), &sb) != 0)
+    return createErrorResponse(configServer, "422");
+  std::ofstream MyFile((PATH_INFO + req.formFields.begin()->second).c_str());
+  string tmp = req.files.begin()->second.substr(2);
+  tmp.erase(tmp.end()-1);
+  MyFile << tmp;
+  // Close the file
+  MyFile.close();
+  return Response::ResBuilder()
+          .sc(SC201)
+          ->mc("Connection", "close")
+          ->build()
+          .toString();
+}
+
+// curl -X POST -H "Content-Type: plain/text" --data alsoosss 
+// curl -F 'file=@./Makefile' http://localhost:8080/upload/ -i
+// curl -F 'file=@./www/images/42.png' http://localhost:8080/ -i
+// curl --data-binary @./Makefile http://localhost:8080/cgi-bin/upload -i
