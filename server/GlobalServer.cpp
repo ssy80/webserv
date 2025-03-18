@@ -723,6 +723,10 @@ std::cerr << "filePath: " << filePath << std::endl;
     }
     else if (req.method == "POST" && isContainIn(methods, "POST"))
     {
+        if (!(req.url == "/cgi-bin/upload" || req.url == "/cgi-bin/upload/"))
+          return createErrorResponse(configServer, "404");
+        if (req.headers["Content-Type"].find("multipart/form-data") == std::string::npos)
+          return createErrorResponse(configServer, "422");
         std::cerr << "--cgi post request--" << std::endl;
         postCgiHandler(req, configServer, configLocation, this->upload_directory, conn);
         return ("");
@@ -733,8 +737,15 @@ std::cerr << "filePath: " << filePath << std::endl;
     }
     //else if (req.method == "POST" && isContainIn(methods, "POST"))
     //    resp = postHandler(req, configServer, configLocation, this->upload_directory);
-    else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
-        resp = deleteHandler(this->upload_directory);
+    else if (req.method == "DELETE" && isContainIn(methods, "DELETE")){
+      if (req.url != "/upload")
+        return Response::ResBuilder()
+          .sc(SC202)
+          ->mc("Connection", "close")
+          ->build()
+          .toString();
+      resp = deleteHandler(this->upload_directory);
+    }
     else
         resp = otherHandler(configServer);
     resp += "\r\n";
