@@ -30,6 +30,8 @@ string createErrorResponse(ConfigServer& configServer, string errorCode){
 		statusCode = SC406;
 	else if (errorCode == "413")
 		statusCode = SC413;
+	else if (errorCode == "422")
+		statusCode = SC422;
 	else if (errorCode == "500")
 		statusCode = SC500;
 	else if (errorCode == "501")
@@ -58,7 +60,7 @@ string createErrorResponse(ConfigServer& configServer, string errorCode){
 		statusCode = SC404;
 	}	
 	//read file
-  	string file = readServerFile(filePath);
+	string file = readServerFile(filePath);
 	Response res = Response::ResBuilder()
 								.sc(statusCode)
 								->ct(MIME::KEY + MIME::HTML)

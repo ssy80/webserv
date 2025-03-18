@@ -65,6 +65,7 @@ using std::stringstream;
 #define SC417 "417 Expectation Failed"
 #define SC418 "418 I'm a teapot"
 #define SC421 "421 Misdirected Request"
+#define SC422 "422 Unprocessable Content"
 #define SC426 "426 Upgrade Required"
 #define SC428 "428 Precondition Required"
 #define SC429 "429 Too Many Requests"
