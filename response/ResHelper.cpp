@@ -376,7 +376,7 @@ string postUploadHandler(Request& req, ConfigServer& configServer, ConfigLocatio
   (void) configLocation;
   string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
   struct stat sb;
-  if (stat(PATH_INFO.c_str(), &sb) != 0)
+  if (stat(PATH_INFO.c_str(), &sb) != 0 || !S_ISDIR(sb.st_mode))
     return createErrorResponse(configServer, "422");
   std::ofstream MyFile((PATH_INFO + (req.formFields.begin() == req.formFields.end()? "defaultfile":req.formFields.begin()->second)).c_str());
   string tmp = req.files.begin()->second.substr(2);
