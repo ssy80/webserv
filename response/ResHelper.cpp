@@ -257,8 +257,9 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 
 	// other path
 	if (getFileExtension(req.url)==""){
-		std::cerr << "unknown file extension" << std::endl;
-		return createErrorResponse(configServer, "404");
+		struct stat sb;
+		if (stat(PATH_INFO.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
+			return createErrorResponse(configServer, "404");
 	}
 
 	vector<unsigned char> file = readRequestFile(PATH_INFO);
@@ -266,10 +267,10 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 		std::cerr << "file is empty" << std::endl;
 		return createErrorResponse(configServer, "404");
 	}
-	
+
 	string res = Response::ResBuilder()
 		.sc(SC200)
-		->ct(MIME::KEY + filetype(PATH_INFO))
+		->ct(MIME::KEY + (getFileExtension(req.url)=="" ? MIME::TXT : filetype(PATH_INFO)))
 		->mc("Connection", "close")
 		->cl(file.size())
 		->build()
@@ -374,11 +375,10 @@ string postUploadHandler(Request& req, ConfigServer& configServer, ConfigLocatio
   // (void) configServer;
   (void) configLocation;
   string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
-  cout << PATH_INFO << endl;
   struct stat sb;
   if (stat(PATH_INFO.c_str(), &sb) != 0)
     return createErrorResponse(configServer, "422");
-  std::ofstream MyFile((PATH_INFO + req.formFields.begin()->second).c_str());
+  std::ofstream MyFile((PATH_INFO + (req.formFields.begin() == req.formFields.end()? "defaultfile":req.formFields.begin()->second)).c_str());
   string tmp = req.files.begin()->second.substr(2);
   tmp.erase(tmp.end()-1);
   MyFile << tmp;

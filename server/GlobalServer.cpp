@@ -734,7 +734,7 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
     }
     else if (req.method == "GET" && isContainIn(methods, "GET")){
         resp = getHandler(req, configServer, configLocation);
-        resp[resp.length()-1] = '\0';
+        resp.erase(resp.end()-1);
     }
     //else if (req.method == "POST" && isContainIn(methods, "POST"))
     //    resp = postHandler(req, configServer, configLocation, this->upload_directory);
