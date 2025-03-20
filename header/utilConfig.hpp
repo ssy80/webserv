@@ -27,16 +27,6 @@
 
 using std::exception;
 
-struct Connection 
-{
-    int fd;                    
-    std::string buffer; 
-    long lastActive;
-    std::string responseBuffer;
-    size_t bytesSent;
-    int cgiOutFd;
-    pid_t cgiPid;
-};
 
 std::string trim(const std::string& str);
 

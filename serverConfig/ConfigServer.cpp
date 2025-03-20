@@ -53,15 +53,11 @@ ConfigServer& ConfigServer::operator=(const ConfigServer& other)
     4) extract key/value to ConfigServer server's keyValueMap*/
 void ConfigServer::parseConfigServer(std::string configServerStr)
 {
-    //get location block
     std::vector<std::string> configLocationStrVec = extractBetweenBlockVec(configServerStr, "[location]", "[/location]");
 
-    //get errorPage block
     std::string errorPageStr = extractBlock(configServerStr, "[error_page]", "[/error_page]");
     this->errorPageMap = extractKeyValuePair(errorPageStr);
 
-
-    //remove location block, error_page block, only left server values;
     configServerStr = removeBlock(configServerStr, "[error_page]", "[/error_page]");
     configServerStr = removeBlock(configServerStr, "[location]", "[/location]");
     this->keyValueMap = extractKeyValuePair(configServerStr);
@@ -72,7 +68,6 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
         throw exception();
     }
 
-    //set attributes
     std::map<std::string, std::string>::iterator itServer;
     for (itServer = this->keyValueMap.begin(); itServer != this->keyValueMap.end(); itServer++)
     {
@@ -107,7 +102,6 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
         }
     }
     
-    //parse configLocation
     std::vector<std::string>::iterator it;
     for (it = configLocationStrVec.begin(); it < configLocationStrVec.end(); it++)
     {

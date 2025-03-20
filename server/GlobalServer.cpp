@@ -12,15 +12,6 @@
 
 #include "../header/GlobalServer.hpp"
 
-struct CGIProcess {
-    int pipe_fd;
-    int client_fd;
-    std::vector<unsigned char> outputBuffer;
-    pid_t pid;
-};
-
-std::map<int, CGIProcess> cgiProcesses;
-
 GlobalServer::GlobalServer(WebServerConfig _webServerConfig): webServerConfig(_webServerConfig){}
 
 GlobalServer::~GlobalServer(){}
@@ -36,31 +27,9 @@ GlobalServer& GlobalServer::operator=(const GlobalServer& other)
     return (*this);
 }
 
-/* set flags to non blocking makes I/O operations on the file descriptor non-blocking, 
-   meaning functions like read() and write() will return immediately rather than 
-   waiting for the operation to complete*/
-/*int GlobalServer::setNonBlocking(int fd)
-{
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1) 
-    {
-        std::cerr << "Error: fcntl F_GETFL" << std::endl;
-        return (-1); //exit(1);
-    }
-
-    flags |= O_NONBLOCK;
-    if (fcntl(fd, F_SETFL, flags) == -1) 
-    {
-        std::cerr << "Error: fcntl F_SETFL" << std::endl; 
-        return (-1); //exit(1);
-    }
-    return (0);
-}*/
-
 int GlobalServer::createAndBind(int port)
 {
     int sockfd;
-    //sockfd = socket(AF_INET, SOCK_STREAM, 0);    //int sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sockfd == -1) 
     {
@@ -69,7 +38,7 @@ int GlobalServer::createAndBind(int port)
     }
 
     int opt = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)    // Allow reuse of local addresses.
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
     {
         std::cerr << "Error: setsockopt" << std::endl; 
         throw exception();
@@ -108,31 +77,24 @@ void GlobalServer::startListeningPort(std::vector<int> uniquePortsVec)
 
     num_ports = uniquePortsVec.size();
 
-    for (int i = 0; i < num_ports; i++)                                                      // Set up listening sockets for num of servers
+    for (int i = 0; i < num_ports; i++)
     {
         port = uniquePortsVec[i];
-        sockfd = createAndBind(port);                                                       //bind the port to listen
+        sockfd = createAndBind(port);
 
-       /* if (setNonBlocking(sockfd) < 0)                                                     //set socket to non blocking 
-        {
-            std::cerr << "Error: set non blocking" << std::endl; 
-            exit(1);
-        }*/
-
-        if (listen(sockfd, SOMAXCONN) < 0)                                                  //set socket to listen
+        if (listen(sockfd, SOMAXCONN) < 0)
         {
             std::cerr << "Error: set listen port" << std::endl; 
             throw exception();
         }
         else
-            this->listenFdsVec.push_back(sockfd);                                           //add to listen 
+            this->listenFdsVec.push_back(sockfd);
 
         struct epoll_event event;                                                           
         memset(&event, 0, sizeof(event));
 
-        //event.events = EPOLLET | EPOLLIN;
         event.events = EPOLLIN;
-        event.data.fd = sockfd;                                                             // For listening sockets, we can simply store the fd in epoll_event.data.fd.
+        event.data.fd = sockfd;
         if (epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, sockfd, &event) < 0) 
         {
             std::cerr << "Error: epoll_ctl add listen socket" << std::endl; 
@@ -166,36 +128,11 @@ void GlobalServer::checkTimeoutConnections(ConfigGlobal& configGlobal)
     }
 }
 
-/**check and removed timeout connection*/
-/*void GlobalServer::checkTimeoutCGIProcess()
-{
-    long now = getCurrentTimeMs();
-    std::vector<int> toRemove;
-    for (std::map<int, Connection*>::iterator it = this->connections.begin(); it != this->connections.end(); it++) 
-    {
-        Connection* conn = it->second;
-        if (now - conn->lastActive > configGlobal.getTimeout()) 
-        {
-            std::cout << "Connection timed out: " << conn->fd << std::endl;
-            toRemove.push_back(conn->fd);
-        }
-    }
-
-    int fdRemove;
-    for (size_t i = 0; i < toRemove.size(); i++) 
-    {
-        fdRemove = toRemove[i];
-        if (this->connections.find(fdRemove) != this->connections.end()) 
-            removeConnection(this->connections[fdRemove]);
-    }
-}*/
-
-
 void GlobalServer::startServer()
 {
-    std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec(); //get number of [server]
-    ConfigGlobal configGlobal = this->webServerConfig.getConfigGlobal();                    //get global [global]                                         
-    std::vector<int> uniquePortsVec = this->webServerConfig.getUniquePortsVec();            //num of listening port depend on number of server   
+    std::vector<ConfigServer> configServerVec = this->webServerConfig.getConfigServerVec();
+    ConfigGlobal configGlobal = this->webServerConfig.getConfigGlobal();                                   
+    std::vector<int> uniquePortsVec = this->webServerConfig.getUniquePortsVec(); 
     
     createEpoll();                                                                          
     startListeningPort(uniquePortsVec);
@@ -206,85 +143,59 @@ void GlobalServer::startServer()
     struct epoll_event events[max_events];
     char buffer[READ_BUFFER];
     int nunEventFds;
+    int fd;
+    int readFd;
+    bool isListen;
+    Connection* conn;
+    bool closeEvent;
 
-    while (true)                                                                            // check event loop.
+    while (true)
     {                   
-        nunEventFds = epoll_wait(this->epoll_fd, events, max_events, 1000);                 //get number events need to check
+        nunEventFds = epoll_wait(this->epoll_fd, events, max_events, 1000);
         if (nunEventFds < 0)
         {
             std::cerr << "Error: epoll_wait" << std::endl; 
             throw exception();
         }
 
-  std::cerr << "connections: " << connections.size() << std::endl;
+        std::cerr << "connections: " << connections.size() << std::endl;
 
-        int fd;
-        int readFd;
-        bool isListen;
         for (int i = 0; i < nunEventFds; i++) 
         {
-            uint32_t ev = events[i].events;
             fd = events[i].data.fd;                                               
             isListen = false;
             for (size_t i = 0; i < this->listenFdsVec.size(); i++) 
             {
-                if (fd == this->listenFdsVec[i])                                // Check if the event is from a listening socket.
+                if (fd == this->listenFdsVec[i])
                 {
                     isListen = true;
                     break;
                 }
             }
 
-            if (isListen)                                                      //event from listening socket, accept new client connection 
+            if (isListen)
             {
                     struct sockaddr_in clientAddr;
                     socklen_t clientLen = sizeof(clientAddr);
                     int clientFd = accept(fd, (struct sockaddr *)&clientAddr, &clientLen);
-                    //int clientFd = accept4(fd, (struct sockaddr *)&clientAddr, &clientLen, SOCK_NONBLOCK);
                     if (clientFd < 0)
-                    {
                           break;
-                    }
                     addConnection(clientFd);
             }
-            else                                                                          //process event from a client fd
+            else
             {
-                Connection* conn = static_cast<Connection*>(events[i].data.ptr);
-                bool closeEvent = false;
+                conn = static_cast<Connection*>(events[i].data.ptr);
                 conn->lastActive = getCurrentTimeMs();
+                closeEvent = false;
 
-                if (ev & (EPOLLERR | EPOLLHUP))                                         //error or hang-up occurred on the CGI fd.
+                if (events[i].events & (EPOLLERR | EPOLLHUP))
                 {
-                //std::cerr << "---1---- "  << std::endl;
-                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, conn->cgiOutFd, NULL);
-                    close(conn->cgiOutFd);
-
-                    int status;
-                    pid_t result = waitpid(conn->cgiPid, &status, WNOHANG);
-                    if (result <= 0)
-                    {
-                        kill(conn->cgiPid, SIGKILL);
-                    }
-                
-                //std::cerr << " --getErrorResponse(conn->buffer --" << conn->buffer << std::endl;
-                    conn->responseBuffer = getErrorResponse(conn->buffer, "500");
-                    conn->bytesSent = 0;
-
-                //std::cerr << " --(ev & (EPOLLERR | EPOLLHUP)) epoll_ctl --" << std::endl;
-
-                    struct epoll_event event;
-                    memset(&event, 0, sizeof(event));
-                    event.data.ptr = conn;
-                    event.events = EPOLLOUT;                                                //modify epoll_ctl for send.
-                    if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
-                        std::cerr << "Error: epoll_ctl mod EPOLLOUT" << std::endl;
+                    handleCgiError(conn);
                 }
-
-                else if (ev & EPOLLIN)                                                         //reading
+                else if (events[i].events & EPOLLIN)
                 { 
-                //std::cerr << "---2---- " << std::endl;
                     readFd = conn->fd;
-                    if (conn->cgiOutFd != -1)                                                  //cgi fd
+                    if (conn->cgiOutFd != -1)
                         readFd = conn->cgiOutFd;
 
                     ssize_t count;
@@ -292,41 +203,20 @@ void GlobalServer::startServer()
                     {
                         memset(buffer, 0, READ_BUFFER);
                         count = recv(readFd, buffer, sizeof(buffer), MSG_DONTWAIT);
-                        if (count > 0)                                                              // data read
+                        if (count > 0)
                         {
                             if (conn->cgiOutFd != -1)
                             {
                                 conn->responseBuffer.append(buffer, count);
-                //std::cerr << "--conn->responseBuffer--: " << conn->responseBuffer << std::endl;
                                 checkForCGITimeout(conn);
                             }
                             else
                                 conn->buffer.append(buffer, count);
                         } 
-                        else if (count == 0)                                              // client closed connection
+                        else if (count == 0)
                         {
-                            if (conn->cgiOutFd != -1)                                     // cgi EOF reached
-                            {
-                //std::cerr << "(count == 0) conn->responseBuffer: " << conn->responseBuffer << std::endl;
-                                int status;
-                                waitpid(conn->cgiPid, &status, 0);
-                                if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)              // The CGI script failed.
-                                {
-                                    conn->responseBuffer = getErrorResponse(conn->buffer, "500");
-                                    conn->bytesSent = 0;
-                                }
-
-                                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, conn->cgiOutFd, NULL);
-                                close(conn->cgiOutFd);
-
-                //std::cerr << "--epoll_ctl mod EPOLLOUT--" << std::endl;
-                                struct epoll_event event;
-                                memset(&event, 0, sizeof(event));
-                                event.data.ptr = conn;
-                                event.events = EPOLLOUT;                                                //modify to wait for write event.
-                                if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
-                                    std::cerr << "Error: epoll_ctl mod EPOLLOUT" << std::endl;
-                            }
+                            if (conn->cgiOutFd != -1)
+                                handleCgiEof(conn);
                             else
                             {
                                 removeConnection(conn);
@@ -334,15 +224,10 @@ void GlobalServer::startServer()
                             }
                             break;
                         }
-                        else if (count == -1)                                   // no more data, break out recv loop, wait for next read event
+                        else if (count == -1)
                         {
-                            //if (errno == EAGAIN || errno == EWOULDBLOCK)      // no more data, stop recv
-                            //    break; 
                             if (conn->cgiOutFd != -1)
-                            {
-                                //std::cerr << "(count == -1) cgi" << std::endl;
                                 checkForCGITimeout(conn);
-                            }
                             else
                                 break;
                         }
@@ -351,47 +236,33 @@ void GlobalServer::startServer()
                     if (closeEvent)
                         break;
 
-                    size_t headerEnd = conn->buffer.find("\r\n\r\n");                     //check got received complete header
-                    if (headerEnd == std::string::npos)                                   //header incomplete; wait for next EPOLLIN event.
+                    size_t headerEnd = conn->buffer.find("\r\n\r\n");
+                    if (headerEnd == std::string::npos)
                         break;
 
-                    ConfigServer configServer = parseConfigServer(conn->buffer);         //get correct server according to config
-                    bool isValidServer = false;
-                    if (configServer.getListenPort() >= 1024 && configServer.getListenPort() <= 65535)
-                        isValidServer = true;
-                    if (isValidServer)
+                    if (isValidServer(conn))
                     {
-                        int contentLength = parseContentLength(conn->buffer);                // Parse Content-Length from header
+                        if (isValidBodySize(conn))
+                        {
+                            int contentLength = parseContentLength(conn->buffer);
+                            size_t total_expected = headerEnd + 4 + contentLength;
 
-                        size_t total_expected = headerEnd + 4 + contentLength;               // Calculate expected total length: headers + CRLF CRLF + body.
-                        bool isMaxBodySize = false;
-                        if(configServer.getMaxBodySize() > 0 && contentLength > configServer.getMaxBodySize())
-                        {
-                            isMaxBodySize = true;
-                        }
-                        else if (configServer.getMaxBodySize() > 0 && (conn->buffer.size() - (headerEnd + 4) > (long unsigned int)configServer.getMaxBodySize()))
-                        {
-                            isMaxBodySize = true;
+                            if (conn->buffer.size() < total_expected)
+                                break;
+                            
+                            conn->responseBuffer = handleRequest(conn->buffer, conn);
+                            conn->bytesSent = 0;
+                            conn->buffer.clear();
+                            if (conn->responseBuffer == "")
+                                break;
+                            setEpollout(conn);
                         }
                         else
-                        { 
-                            if (conn->buffer.size() < total_expected)                           //Full request (headers + body) not received yet, partial data remains in conn->buffer, wait for more data.
-                                break;
-                        }                                                  
-
-                        if (isMaxBodySize)
                         {
                             conn->responseBuffer = getErrorResponse(conn->buffer, "413");
                             conn->bytesSent = 0;
                             conn->buffer.clear();
-                        }
-                        else
-                        {
-                            conn->responseBuffer = handleRequest(conn->buffer, conn);
-                            conn->bytesSent = 0;
-                            conn->buffer.clear();
-                            if (conn->responseBuffer == "")                               //cgi process
-                                break;
+                            setEpollout(conn);
                         }
                     }
                     else
@@ -399,21 +270,12 @@ void GlobalServer::startServer()
                         conn->responseBuffer = getErrorResponse(conn->buffer, "400");
                         conn->bytesSent = 0;
                         conn->buffer.clear();
-                    }
-
-                    struct epoll_event event;
-                    memset(&event, 0, sizeof(event));
-                    event.data.ptr = conn;
-                    event.events = EPOLLOUT;                                                //modify to wait for write event.
-                    if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
-                    {
-                        std::cerr << "Error: epoll_ctl mod EPOLLOUT" << std::endl;
+                        setEpollout(conn);
                     }
                 }
 
-                if (ev & EPOLLOUT )
+                if (events[i].events & EPOLLOUT )
                 {
-                //std::cerr << "---3---- " << std::endl;
                     int n;    
                     while (conn->bytesSent < conn->responseBuffer.size()) 
                     {
@@ -423,29 +285,19 @@ void GlobalServer::startServer()
                             conn->bytesSent += n;
                             std::cerr << "--conn->responseBuffer.size()--: " << conn->responseBuffer.size() << std::endl;
                             std::cerr << "--bytes_sent--: " << conn->bytesSent << std::endl;
-                //std::cerr << "--conn->responseBuffer--: " << conn->responseBuffer << std::endl;
                         }
-                        else if(n == 0)                                                        //client close
+                        else if(n == 0)
                         {
                             removeConnection(conn);
                             break;
                         }
-                        else if (n == -1)                                                    //Cannot send more now; break and wait for next EPOLLOUT.
-                        {
+                        else if (n == -1)
                             break;
-                        }
-                        /*else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) 
-                        
-                            // Cannot send more now; break and wait for next EPOLLOUT.
-                            break;
-                        } */
                     }
-                    if (conn->bytesSent == conn->responseBuffer.size())                   // If the entire response is sent, remove connection
-                    {
+                    if (conn->bytesSent == conn->responseBuffer.size())
                         removeConnection(conn);
-                    }
                 }
-            }   
+            }
         }
         checkTimeoutConnections(configGlobal);
         checkForCGITimeout();
@@ -462,13 +314,12 @@ void GlobalServer::checkForCGITimeout(Connection* conn)
 {
     int status;
     pid_t result = waitpid(conn->cgiPid, &status, WNOHANG);
-    if (result <= 0) //still active
+    if (result <= 0)
     {
         if (getCurrentTimeMs() - conn->lastActive > TIMEOUT)
         {
             kill(conn->cgiPid, SIGKILL);
             std::cerr << "killed child due to time out" << std::endl;
-            //std::cerr << "result waitpid: " << waitpid(conn->cgiPid, &status, 0) << std::endl;
         } 
     }  
 } 
@@ -488,7 +339,6 @@ void GlobalServer::checkForCGITimeout()
                 {
                     kill(conn->cgiPid, SIGKILL);
                     std::cerr << "killed child due to time out" << std::endl;
-                    //std::cerr << "result waitpid: " << waitpid(conn->cgiPid, &status, 0) << std::endl;
                 } 
             }  
         }
@@ -502,6 +352,7 @@ void GlobalServer::addConnection(int client_fd)
     Connection* conn = new Connection;
     conn->fd = client_fd;
     conn->buffer = "";
+    conn->responseBuffer = "";
     conn->lastActive = getCurrentTimeMs();
     conn->cgiOutFd = -1;
     
@@ -509,7 +360,6 @@ void GlobalServer::addConnection(int client_fd)
 
     struct epoll_event event;
     memset(&event, 0, sizeof(event));
-    //event.events = EPOLLET | EPOLLIN;
     event.events = EPOLLIN;
     event.data.ptr = static_cast<void*>(conn);
     if (epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, client_fd, &event) < 0) 
@@ -525,18 +375,12 @@ void GlobalServer::addConnection(int client_fd)
 void GlobalServer::removeConnection(Connection* conn)
 {
     if (epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL) < 0) 
-    {
         std::cerr << "Error: epoll_ctl remove client" << std::endl; 
-    }
     close(conn->fd);
 
     if (conn->cgiOutFd != -1)
     {
         epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, conn->cgiOutFd, NULL);
-        /*if (epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, conn->cgiOutFd, NULL) < 0) 
-        {
-            std::cerr << "Error: epoll_ctl remove client cgi" << std::endl; 
-        } */
         close(conn->cgiOutFd);
     }
 
@@ -596,14 +440,13 @@ bool compareConfigLocationDescending(const ConfigLocation& a, const ConfigLocati
 
 std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string errorCode)
 {
-    //match server
     ConfigServer configServer = parseConfigServer(requestStr);
     std::map<std::string, std::string> errorPageMap = configServer.getErrorPageMap();
     std::string filePath = "";
     std::map<std::string, std::string>::iterator it;
     std::string statusCode;
 
-    it = errorPageMap.find(errorCode);                         //find error page
+    it = errorPageMap.find(errorCode);
     if (it != errorPageMap.end())
     {
         filePath = it->second;
@@ -621,11 +464,11 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
 
     if (filePath != "")
     {
-        if (readServerFile(filePath) == "")                  //file not found
+        if (readServerFile(filePath) == "")
             filePath = "";
     }
                                     
-    if (filePath == "")                                      //cannot find error page, send default error page
+    if (filePath == "")
     {
         std::map<std::string, std::string> defaultErrorPageMap = configServer.getDefaultErrorPageMap();
         it = defaultErrorPageMap.find(errorCode);
@@ -645,7 +488,6 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
         }
     }
 
-    //read file
     std::string output; 
     std::string file = readServerFile(filePath);
     Response res = Response::ResBuilder()
@@ -661,11 +503,10 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
 
 std::string GlobalServer::handleRequest(std::string& requestStr, Connection* conn)
 {
-    //match server
     ConfigServer configServer = parseConfigServer(requestStr);
     std::vector<ConfigLocation> configLocationVec = configServer.getConfigLocationVec();
 
-    std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);                  // Sort the vector in descending order using the comparator function.
+    std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);
 
     Request req = RequestParser::parseRequest(requestStr);
     
@@ -673,7 +514,7 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
 
     ConfigLocation configLocation;
     std::vector<ConfigLocation>::iterator it;
-    for (it = configLocationVec.begin(); it < configLocationVec.end(); it++)                                        //get [location] params matching the request_path
+    for (it = configLocationVec.begin(); it < configLocationVec.end(); it++)
     {
         configLocation = (*it);
         std::string requestPath = configLocation.getRequestPath();
@@ -689,19 +530,17 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
     std::string methods = configLocation.getMethods();
     std::string redirect = configLocation.getRedirect();
 
-    std::string filePath = replacePath(req.url, requestPath, root);            //map request_path to root in [location]
+    std::string filePath = replacePath(req.url, requestPath, root);
 
-    std::cerr << "requestPath: " << requestPath << std::endl;
-    std::cerr << "filePath: " << filePath << std::endl;
+    //std::cerr << "requestPath: " << requestPath << std::endl;
+    //std::cerr << "filePath: " << filePath << std::endl;
 
     std::string resp = "";
 
-    if (req.version != "HTTP/1.1")                              //handle wrong version
-    {
+    if (req.version != "HTTP/1.1")
         return (createErrorResponse(configServer, "505"));
-    }
 
-    if (!redirect.empty())                                     //handle redirect
+    if (!redirect.empty())
     {
         Response res = Response::ResBuilder()
                 .sc(SC301)
@@ -712,20 +551,16 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
         return (resp);
     }
 
-    //std::cout << "REQUEST STR: " << requestStr << std::endl;
-    //std::cout << "REQ PRINT: " << std::endl;
-    //req.print();
     if (req.method == "GET" && isContainIn(methods, "GET") && requestPath == "/cgi-bin" && !isDir(filePath))
     {
-        std::cerr << "--cgi get request--" << std::endl;
         handleGetCGI(filePath, conn);
         return ("");
     }
     else if (req.method == "POST" && isContainIn(methods, "POST"))
     {
-        if (req.url == "/cgi-bin/save_file.py"){
-          std::cerr << "--cgi post request--" << std::endl;
-          postCgiHandler(req, configServer, configLocation, this->upload_directory, conn);
+        if (req.url == "/cgi-bin/save_file.py")
+        {
+          postCgiHandler(req, configLocation, this->upload_directory, conn);
           return ("");
         }
         if (req.url[req.url.length()-1] != '/' || req.headers["Content-Type"].find("multipart/form-data") == std::string::npos)
@@ -736,9 +571,8 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
         resp = getHandler(req, configServer, configLocation);
         resp.erase(resp.end()-1);
     }
-    //else if (req.method == "POST" && isContainIn(methods, "POST"))
-    //    resp = postHandler(req, configServer, configLocation, this->upload_directory);
-    else if (req.method == "DELETE" && isContainIn(methods, "DELETE")){
+    else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
+    {
       if (req.url != "/upload")
         return Response::ResBuilder()
           .sc(SC202)
@@ -757,9 +591,8 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
 
 void GlobalServer::handleGetCGI(std::string& filePath, Connection* conn)
 {
-    std::cerr << " -- handleGetCGI --" << std::endl;
-
     int cgiSp[2];
+
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, cgiSp) < 0) 
     {
         perror("socketpair");
@@ -777,47 +610,32 @@ void GlobalServer::handleGetCGI(std::string& filePath, Connection* conn)
     {   
         dup2(cgiSp[1], STDOUT_FILENO);
         close(cgiSp[1]);
-
-        // Execute the CGI script.
-        extern char **environ;  
-        //std::string prog = "/bin/python3";
-		//char* program =  const_cast<char*>(prog.c_str());
-        //char* args[] = { program, const_cast<char*>("-u"), const_cast<char*>(filePath.c_str()), NULL };
     
         char* args[] = {const_cast<char*>(filePath.c_str()), NULL};
-    // std::cerr << "args[0]: " << args[0] << std::endl;
-    // std::cerr << "args[1]: " << args[1] << std::endl;
-    // std::cerr << "args[2]: " << args[2] << std::endl;
-		execve(args[0], args, environ);
+		execve(args[0], args, NULL);
         perror("execve");
         exit(1);
     }
-    else  // Parent process
+    else
     {
-        // Close the child's end of the pipes.
         close(cgiSp[1]);
 
         conn->cgiOutFd = cgiSp[0];
         conn->cgiPid = pid;
 
-        // Add the CGI output fd to the epoll instance so that the main loop can read from it.
         struct epoll_event event;
         event.data.ptr = conn;         
-        event.events = EPOLLIN | EPOLLERR | EPOLLHUP;                               //| EPOLLET; // Monitor for input (edge-triggered). EPOLLERR and EPOLLHUP
+        event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgiSp[0], &event) < 0) 
             perror("epoll_ctl: add CGI fd socket");
-
-        std::cerr << " -- parent end --" << std::endl;
     
     }
 }
 
-
 void GlobalServer::handlePostCGI(std::string& scriptPath, char* envp[], Connection* conn)  
 {
-    std::cerr << " -- handlePostCGI --" << std::endl;
-
     int cgiSp[2];
+
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, cgiSp) < 0) 
     {
         perror("socketpair");
@@ -841,32 +659,23 @@ void GlobalServer::handlePostCGI(std::string& scriptPath, char* envp[], Connecti
 		std::cerr << "Exec failed: " << errno << std::endl;
 		exit(1);
     }
-    else  // Parent process
+    else
     {
-        // Close the child's end of the pipes.
         close(cgiSp[1]);
 
         conn->cgiOutFd = cgiSp[0];
         conn->cgiPid = pid;
 
-        // Add the CGI output fd to the epoll instance so that the main loop can read from it.
         struct epoll_event event;
         event.data.ptr = conn;         
-        event.events = EPOLLIN | EPOLLERR | EPOLLHUP;                               //| EPOLLET; // Monitor for input (edge-triggered). EPOLLERR and EPOLLHUP
+        event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgiSp[0], &event) < 0) 
-            perror("epoll_ctl: add CGI fd socket");
-
-        std::cerr << " -- parent end --" << std::endl;
-    
+            perror("epoll_ctl: add CGI fd socket");    
     }
 }
 
-// post handler is used to upload 1 file through the cgi script
-void GlobalServer::postCgiHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation, std::string uploadDirectory, Connection* conn) {
-
-    std::cerr << "-- start postCgiHandler: " << std::endl;
-
-    (void) configServer;
+void GlobalServer::postCgiHandler(Request& req, ConfigLocation& configLocation, std::string uploadDirectory, Connection* conn) 
+{
 	string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
 	
 	if (req.headers["Content-Type"].find("multipart/form-data") != std::string::npos
@@ -874,18 +683,12 @@ void GlobalServer::postCgiHandler(Request& req, ConfigServer& configServer, Conf
 		&& !req.files.empty()
 		&& !req.formFields.empty()) 
     {
-    std::cerr << "-- multipart/form-data: " << std::endl;
-
 		mkdir(uploadDirectory.c_str(), 0777);
 		string upload_filename = (uploadDirectory + "/" + req.formFields["filename"]).substr(2);
 		
 		int idxEnd = req.files["filename"].size() - 3;
 		string upload_content = req.files["filename"].substr(2, idxEnd);
 
-		//if (upload_content.size() > 100) {
-		//	return createErrorResponse(configServer, "413");
-		//}
-		
 		std::vector<std::string> envVars;
 		envVars.push_back("UPLOAD_FILENAME=" + upload_filename);
 		envVars.push_back("UPLOAD_CONTENT=" + upload_content);
@@ -896,41 +699,19 @@ void GlobalServer::postCgiHandler(Request& req, ConfigServer& configServer, Conf
 		}
 		envp.push_back(NULL);
 
-    std::cerr << "-- 1 start handlePostCGI: " << std::endl;
-		
-		//vector<unsigned char> file = readRequestCGI(PATH_INFO, envp.data());
         handlePostCGI(PATH_INFO, envp.data(), conn);
-        
-		//if (file.empty()) {
-		//	return createErrorResponse(configServer, "500");
-		//}
-
-		//string res;
-		//res.insert(res.end(), file.begin(), file.end());
-		//return res;
+    
 	}
 	
-	if (req.headers.find("Transfer-Encoding") != req.headers.end()
+	else if (req.headers.find("Transfer-Encoding") != req.headers.end()
 		&& req.headers["Transfer-Encoding"].find("chunked") != std::string::npos
 		&& req.url.find("save_file.py") != std::string::npos
 		&& !req.files.empty()) 
     {
-    
-    std::cerr << "-- Transfer-Encoding: " << std::endl;
-
 		mkdir(uploadDirectory.c_str(), 0777);
 		string upload_filename = (uploadDirectory + "/" + "chunks.txt").substr(2);
-		//string upload_filename = req.formFields["filename"];
 		
-		// TEST STRING
-		//string test = "4\r\nWiki\r\n7\r\npedia i\r\nB\r\nn \r\n chunkQ.\r\n0\r\n\r\n";
-		//string upload_content = getChunks(test);
-		
-		// ACTUAL STRING
 		string upload_content = getChunks(req.files["body"]);
-		//if (upload_content.empty()) {
-		//	return createErrorResponse(configServer, "400");
-		//}
 		
 		std::vector<std::string> envVars;
 		envVars.push_back("UPLOAD_FILENAME=" + upload_filename);
@@ -942,28 +723,9 @@ void GlobalServer::postCgiHandler(Request& req, ConfigServer& configServer, Conf
 		}
 		envp.push_back(NULL);
 
-    std::cerr << "-- 2 start handlePostCGI: " << std::endl;
-
         handlePostCGI(PATH_INFO, envp.data(), conn);
-		//vector<unsigned char> file = readRequestCGI(PATH_INFO, envp.data());
-		//if (file.empty()) {
-		//	return createErrorResponse(configServer, "500");
-		//}
-
-		//string res;
-		//res.insert(res.end(), file.begin(), file.end());
-		//return res;
 	}
-
-	//else {
-	//	return createErrorResponse(configServer, "405");
-	//}
-
-    std::cerr << "-- end handlePostCGI: " << std::endl;
-
 }
-
-
 
 std::string GlobalServer::getChunks(std::string& chunks) {
 	std::cout << "GETCHUNKS: " << chunks << std::endl;
@@ -1000,3 +762,75 @@ std::string GlobalServer::getChunks(std::string& chunks) {
     std::cerr << "RES: " << res << std::endl;
     return res;
 }
+
+void GlobalServer::handleCgiError(Connection* conn)
+{
+    int status;
+    pid_t result = waitpid(conn->cgiPid, &status, WNOHANG);
+    if (result <= 0)
+        kill(conn->cgiPid, SIGKILL);
+
+    conn->responseBuffer = getErrorResponse(conn->buffer, "500");
+    conn->bytesSent = 0;
+
+    epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, conn->cgiOutFd, NULL);
+    close(conn->cgiOutFd);
+
+    setEpollout(conn);
+}
+
+void GlobalServer::handleCgiEof(Connection* conn)
+{
+    int status;
+    waitpid(conn->cgiPid, &status, 0);
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+    {
+        conn->responseBuffer = getErrorResponse(conn->buffer, "500");
+        conn->bytesSent = 0;
+    }
+
+    epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, conn->cgiOutFd, NULL);
+    close(conn->cgiOutFd);
+
+    setEpollout(conn);
+}
+
+void GlobalServer::setEpollout(Connection* conn)
+{
+    struct epoll_event event;
+    memset(&event, 0, sizeof(event));
+    event.data.ptr = conn;
+    event.events = EPOLLOUT;
+    if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0) 
+        std::cerr << "Error: epoll_ctl mod EPOLLOUT" << std::endl;
+}
+
+bool GlobalServer::isValidServer(Connection* conn)
+{
+    ConfigServer configServer = parseConfigServer(conn->buffer);
+    if (configServer.getListenPort() >= 1024 && configServer.getListenPort() <= 65535)
+        return (true);
+    return (false);
+}
+
+bool GlobalServer::isValidBodySize(Connection* conn)
+{
+    ConfigServer configServer = parseConfigServer(conn->buffer);
+
+    size_t headerEnd = conn->buffer.find("\r\n\r\n");  
+    int contentLength = parseContentLength(conn->buffer);
+
+    if(configServer.getMaxBodySize() > 0 && contentLength > configServer.getMaxBodySize())
+    {
+        return (false);
+    }
+    else if (configServer.getMaxBodySize() > 0 && (conn->buffer.size() - (headerEnd + 4) > (long unsigned int)configServer.getMaxBodySize()))
+    {
+        return (false);
+    }
+    else
+    { 
+        return (true);
+    }                                                  
+}
+
