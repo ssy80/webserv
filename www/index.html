@@ -73,7 +73,7 @@
         <button onclick="deleteFiles()">Delete Files</button>
         <script>
             async function deleteFiles() {
-                    const response = await fetch("/www/index.html", {method: "DELETE"});
+                    const response = await fetch("/upload", {method: "DELETE"});
                     alert("Successfully deleted files");
             }
         </script>

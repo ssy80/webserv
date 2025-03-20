@@ -11,8 +11,6 @@
 /* ************************************************************************** */
 
 #include "../header/ResHelper.hpp"
-#include <unistd.h>
-#include <sys/wait.h>
 
 string createErrorResponse(ConfigServer& configServer, string errorCode){
 	map<string, string> errorPageMap = configServer.getErrorPageMap();
@@ -280,21 +278,8 @@ string getHandler(Request& req, ConfigServer& configServer, ConfigLocation& conf
 	return res;
 }
 
-std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
-    std::vector<std::string> tokens;
-    size_t start = 0, end = 0;
-    
-    while ((end = s.find(delimiter, start)) != std::string::npos) {
-        tokens.push_back(s.substr(start, end - start));
-        start = end + delimiter.length();
-    }
-    tokens.push_back(s.substr(start));
-
-    return tokens;
-}
-
 // when delete handler is called, it will delete all files in the folder
-string deleteHandler(std::string uploadDirectory) {
+string deleteHandler(string uploadDirectory) {
 	// check if directory exists
 	struct stat st;
 	if (stat(uploadDirectory.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
@@ -354,17 +339,14 @@ string listdir(const string& path){
   while ((entry = readdir(dir)) != NULL) {
     string fileStr(entry->d_name);
     if (fileStr == "." || fileStr == ".."){
-        // cout << entry->d_name << endl;
       continue;
     }
     string tmp(entry->d_name);
     if (entry->d_type == DT_REG){
       res += "<a href=\"" + tmp + "\">" +  tmp + "</a> <br/>";
-      // cout << "this is file : " <<  entry->d_name << endl;
     }
     else if (entry->d_type == DT_DIR){
       res += "<a href=\"" + tmp + "/\">" +  tmp + "/</a> <br/>";
-      // cout << "this is folder : " <<  entry->d_name << endl;
     }
   }
   closedir(dir);
@@ -372,8 +354,6 @@ string listdir(const string& path){
 }
 
 string postUploadHandler(Request& req, ConfigServer& configServer, ConfigLocation& configLocation){
-  // (void) configServer;
-  (void) configLocation;
   string PATH_INFO = replacePath(req.url, configLocation.getRequestPath(), configLocation.getRoot());
   struct stat sb;
   if (stat(PATH_INFO.c_str(), &sb) != 0 || !S_ISDIR(sb.st_mode))
