@@ -29,7 +29,6 @@ SRC	=	${DIR}/main.cpp \
 		${DIR_SERVER}/AServer.cpp \
 		${DIR_SERVER}/GlobalServer.cpp \
 		${DIR_SERVER}/MIME.cpp \
-		${DIR_SERVER}/YSServer.cpp \
 		${DIR_SERVER_CONFIG}/ConfigGlobal.cpp \
 		${DIR_SERVER_CONFIG}/ConfigLocation.cpp  \
 		${DIR_SERVER_CONFIG}/ConfigServer.cpp \
@@ -37,20 +36,19 @@ SRC	=	${DIR}/main.cpp \
 		${DIR_SERVER_CONFIG}/WebServerConfig.cpp
 
 
-HEADER= ${wildcard ${INCLUDE}/*.hpp} 
-# HEADER= ${INCLUDE}/AServer.hpp \
-# 		${INCLUDE}/ConfigGlobal.hpp \
-# 		${INCLUDE}/ConfigLocation.hpp \
-# 		${INCLUDE}/ConfigServer.hpp \
-# 		${INCLUDE}/GlobalServer.hpp \
-# 		${INCLUDE}/MIME.hpp \
-# 		${INCLUDE}/Request.hpp \
-# 		${INCLUDE}/RequestParser.hpp \
-# 		${INCLUDE}/ResHelper.hpp \
-# 		${INCLUDE}/Response.hpp \
-# 		${INCLUDE}/utilConfig.hpp \
-# 		${INCLUDE}/WebServerConfig.hpp \
-# 		${INCLUDE}/YSServer.hpp
+# HEADER= ${wildcard ${INCLUDE}/*.hpp} 
+HEADER= ${INCLUDE}/AServer.hpp \
+		${INCLUDE}/ConfigGlobal.hpp \
+		${INCLUDE}/ConfigLocation.hpp \
+		${INCLUDE}/ConfigServer.hpp \
+		${INCLUDE}/GlobalServer.hpp \
+		${INCLUDE}/MIME.hpp \
+		${INCLUDE}/Request.hpp \
+		${INCLUDE}/RequestParser.hpp \
+		${INCLUDE}/ResHelper.hpp \
+		${INCLUDE}/Response.hpp \
+		${INCLUDE}/utilConfig.hpp \
+		${INCLUDE}/WebServerConfig.hpp \
 
 OBJS		= ${SRC:.cpp=.o}
 

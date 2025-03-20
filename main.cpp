@@ -12,8 +12,6 @@
 
 #include "header/WebServerConfig.hpp"
 #include "header/GlobalServer.hpp"
-#include "header/YSServer.hpp"
-
 
 void displayParseConfig(WebServerConfig webServerConfig)
 {
