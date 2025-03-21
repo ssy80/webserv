@@ -501,7 +501,7 @@ std::string GlobalServer::getErrorResponse(std::string& requestStr, std::string 
     return (output);
 }
 
-std::string GlobalServer::handleRequest(std::string& requestStr, Connection* conn)
+std::string GlobalServer::handleRequest(std::string &requestStr, Connection *conn)
 {
     ConfigServer configServer = parseConfigServer(requestStr);
     std::vector<ConfigLocation> configLocationVec = configServer.getConfigLocationVec();
@@ -509,7 +509,7 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
     std::sort(configLocationVec.begin(), configLocationVec.end(), compareConfigLocationDescending);
 
     Request req = RequestParser::parseRequest(requestStr);
-    
+
     std::string urlDirPath = getDirectoryPath(req.url);
 
     ConfigLocation configLocation;
@@ -532,9 +532,6 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
 
     std::string filePath = replacePath(req.url, requestPath, root);
 
-    //std::cerr << "requestPath: " << requestPath << std::endl;
-    //std::cerr << "filePath: " << filePath << std::endl;
-
     std::string resp = "";
 
     if (req.version != "HTTP/1.1")
@@ -543,10 +540,10 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
     if (!redirect.empty())
     {
         Response res = Response::ResBuilder()
-                .sc(SC301)
-                ->mc("Location", redirect)
-                ->mc("Connection", "close")
-                ->build();
+                           .sc(SC301)
+                           ->mc("Location", redirect)
+                           ->mc("Connection", "close")
+                           ->build();
         resp = res.toString();
         return (resp);
     }
@@ -560,34 +557,34 @@ std::string GlobalServer::handleRequest(std::string& requestStr, Connection* con
     {
         if (req.url == "/cgi-bin/save_file.py")
         {
-          postCgiHandler(req, configLocation, this->upload_directory, conn);
-          return ("");
+            postCgiHandler(req, configLocation, this->upload_directory, conn);
+            return ("");
         }
-        if (req.url[req.url.length()-1] != '/' || req.headers["Content-Type"].find("multipart/form-data") == std::string::npos)
-          return createErrorResponse(configServer, "422");
+        if (req.url[req.url.length() - 1] != '/' || req.headers["Content-Type"].find("multipart/form-data") == std::string::npos)
+            return createErrorResponse(configServer, "422");
         return postUploadHandler(req, configServer, configLocation);
     }
-    else if (req.method == "GET" && isContainIn(methods, "GET")){
+    else if (req.method == "GET" && isContainIn(methods, "GET"))
+    {
         resp = getHandler(req, configServer, configLocation);
-        resp.erase(resp.end()-1);
+        resp.erase(resp.end() - 1);
     }
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
     {
-      if (req.url != "/upload")
-        return Response::ResBuilder()
-          .sc(SC202)
-          ->mc("Connection", "close")
-          ->build()
-          .toString();
-      resp = deleteHandler(this->upload_directory);
+        if (req.url != "/upload/delete")
+            return Response::ResBuilder()
+                .sc(SC202)
+                ->mc("Connection", "close")
+                ->build()
+                .toString();
+        resp = deleteHandler(this->upload_directory);
     }
     else
         resp = otherHandler(configServer);
     resp += "\r\n";
-  
+
     return resp;
 }
-
 
 void GlobalServer::handleGetCGI(std::string& filePath, Connection* conn)
 {
