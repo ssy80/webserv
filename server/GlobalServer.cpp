@@ -571,7 +571,7 @@ std::string GlobalServer::handleRequest(std::string &requestStr, Connection *con
     }
     else if (req.method == "DELETE" && isContainIn(methods, "DELETE"))
     {
-        if (req.url != "/upload/delete")
+        if (req.url != "/upload/")
             return Response::ResBuilder()
                 .sc(SC202)
                 ->mc("Connection", "close")
