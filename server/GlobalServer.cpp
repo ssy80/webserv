@@ -114,7 +114,7 @@ void GlobalServer::checkTimeoutConnections(ConfigGlobal& configGlobal)
         Connection* conn = it->second;
         if (now - conn->lastActive > configGlobal.getTimeout()) 
         {
-            std::cout << "Connection timed out: " << conn->fd << std::endl;
+            //std::cout << "Connection timed out: " << conn->fd << std::endl;
             toRemove.push_back(conn->fd);
         }
     }
@@ -158,7 +158,7 @@ void GlobalServer::startServer()
             throw exception();
         }
 
-        std::cerr << "connections: " << connections.size() << std::endl;
+        //std::cerr << "connections: " << connections.size() << std::endl;
 
         for (int i = 0; i < nunEventFds; i++) 
         {
@@ -233,6 +233,12 @@ void GlobalServer::startServer()
                         }
                     }
 
+                    if (count == -1 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+                    {
+                        removeConnection(conn);
+                        break;
+                    }
+                        
                     if (closeEvent)
                         break;
 
@@ -276,10 +282,10 @@ void GlobalServer::startServer()
 
                 if (events[i].events & EPOLLOUT )
                 {
-                    int n;    
+                    int n;
                     while (conn->bytesSent < conn->responseBuffer.size()) 
                     {
-                        n = send(conn->fd, conn->responseBuffer.data() + conn->bytesSent, conn->responseBuffer.size() - conn->bytesSent, MSG_NOSIGNAL);            
+                        n = send(conn->fd, conn->responseBuffer.data() + conn->bytesSent, conn->responseBuffer.size() - conn->bytesSent, MSG_NOSIGNAL);             
                         if (n > 0) 
                         {
                             conn->bytesSent += n;
@@ -294,8 +300,12 @@ void GlobalServer::startServer()
                         else if (n == -1)
                             break;
                     }
+
                     if (conn->bytesSent == conn->responseBuffer.size())
-                        removeConnection(conn);
+                            removeConnection(conn);
+                    else if (n == -1 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+                            removeConnection(conn);
+                    
                 }
             }
         }
