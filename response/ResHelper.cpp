@@ -294,7 +294,7 @@ string deleteHandler(string uploadDirectory) {
 	DIR *dir = opendir(uploadDirectory.c_str());
 	if (!dir) {
 		return Response::ResBuilder()
-			.sc(SC200)
+			.sc(SC202)
 			->mc("Connection", "close")
 			->build()
 			.toString() + CLRF;
@@ -318,7 +318,7 @@ string deleteHandler(string uploadDirectory) {
 	}
 	closedir(dir);
 	return Response::ResBuilder()
-		.sc(SC200)
+		.sc(SC202)
 		->mc("Connection", "close")
 		->build()
 		.toString() + CLRF;
@@ -371,7 +371,5 @@ string postUploadHandler(Request& req, ConfigServer& configServer, ConfigLocatio
           .toString();
 }
 
-// curl -X POST -H "Content-Type: plain/text" --data alsoosss 
 // curl -F 'file=@./Makefile' http://localhost:8080/upload/ -i
 // curl -F 'file=@./www/images/42.png' http://localhost:8080/ -i
-// curl --data-binary @./Makefile http://localhost:8080/cgi-bin/upload -i
