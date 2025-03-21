@@ -709,7 +709,7 @@ void GlobalServer::postCgiHandler(Request& req, ConfigLocation& configLocation, 
 		string upload_filename = (uploadDirectory + "/" + "chunks.txt").substr(2);
 		
 		string upload_content = getChunks(req.files["body"]);
-		
+
 		std::vector<std::string> envVars;
 		envVars.push_back("UPLOAD_FILENAME=" + upload_filename);
 		envVars.push_back("UPLOAD_CONTENT=" + upload_content);
@@ -725,13 +725,19 @@ void GlobalServer::postCgiHandler(Request& req, ConfigLocation& configLocation, 
 }
 
 std::string GlobalServer::getChunks(std::string& chunks) {
-	std::cout << "GETCHUNKS: " << chunks << std::endl;
-	size_t i = 0;
+	std::cout << "Chunked Request: " << std::endl;
+    for (size_t j = 0; j < chunks.size(); j++) {
+        if (chunks[j] == '\r') std::cout << "\\r";
+        else if (chunks[j] == '\n') std::cout << "\\n";
+        else std::cout << chunks[j];
+    }
+    std::cout << std::endl;
+	
+    size_t i = 0;
 	string res;
 
 	while (i < chunks.size()) {
-	
-		size_t clrfPos = chunks.find("\r\n", i);
+		size_t clrfPos = chunks.find("\r", i);
 		if (clrfPos == std::string::npos) {
 			std::cerr << "Error: Invalid chunked encoding" << std::endl;
 			break;
@@ -743,20 +749,29 @@ std::string GlobalServer::getChunks(std::string& chunks) {
 		ss << std::hex << chunkSizeHex;
 		if (!(ss >> chunkSize)) {
 			std::cerr << "Error: failed to parse chunk size: " << chunkSizeHex << std::endl;
+            break;
 		}
 
-		i = clrfPos + 2;
+		i = clrfPos + 1;
 		
 		if (chunkSize == 0)
 			break;
 		
-		res.append(chunks.substr(i, chunkSize));
-		i += chunkSize + 2;
+        std::cout << "Chunk Size: " << chunkSize << std::endl;
+        std::cout << "Chunk Data: ";
+        for (size_t j = 0; j < chunkSize; j++) {
+            char c = chunks[i + j];
+            if (c == '\r') std::cout << "\\r";
+            else if (c == '\n') std::cout << "\\n";
+            else std::cout << c;
+        }
+        std::cout << std::endl;
+		
+        res.append(chunks.substr(i, chunkSize));
+		i += chunkSize + 1;
 
-		std::cout << chunkSize << res << std::endl;
 	}
 
-    std::cerr << "RES: " << res << std::endl;
     return res;
 }
 
