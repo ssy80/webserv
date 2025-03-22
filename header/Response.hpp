@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 09:41:59 by daong             #+#    #+#             */
-/*   Updated: 2025/03/15 09:42:02 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:47:00 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,7 @@ class Response{
 		string misc;
 
 	public:
-		class ResBuilder{
+		class ResBuilder {
 			public:
 				string statusCode;
 				string contentType;
@@ -99,13 +99,12 @@ class Response{
 				ResBuilder* ct(const string& type);
 				ResBuilder* cl(int len);
 				ResBuilder* mc(const string& key, const string& value);
-        ~ResBuilder();
-				
-        Response build();
+				~ResBuilder();
+				Response build();
 		};
 
 		Response(ResBuilder builder);
-    ~Response();
+    	~Response();
 		string toString();
 };
 

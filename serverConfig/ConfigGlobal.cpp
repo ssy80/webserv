@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 19:52:54 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/09 18:00:03 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:54:50 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,7 +119,6 @@ const std::string& ConfigGlobal::getUploadDirectory() const
     return (this->upload_directory);
 }
 
-// exception
 const char *ConfigGlobal::ParseErrException::what() const throw(){
 	return "Parsing error in config file";
 }

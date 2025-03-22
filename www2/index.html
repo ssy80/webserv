@@ -31,24 +31,39 @@
                         height: 25%;
 				}
     </style>
+      <script>
+        async function loadTime() {
+            const response = await fetch('/cgi-bin/time.py');
+            if (!response.ok) throw new Error("Failed to load");
+            const text = await response.text();
+            document.getElementById('server-time').innerHTML = text;
+        }
+
+        async function loadUnixTime() {
+            const response = await fetch('/cgi-bin/time2.cgi');
+            if (!response.ok) throw new Error("Failed to load");
+            const text = await response.text();
+            document.getElementById('unix-time').innerHTML = text;
+        }
+    </script>
+
 </head>
-<body>
+<body onload="loadTime();loadUnixTime()">
     <header>
         <h1>Welcome to Webserv</h1>
     </header>
     <main>
+        <div>
+            <a href="/images/">images folder</a>
+            |
+            <a href="/upload/">upload folder</a>
+            |
+            <a href="/cgi-bin/">cgi-bin</a>
+        </div>
         <div id="server-time">Loading server time...</div>
-        <script>
-            async function loadTime() {
-                const response = await fetch('/cgi-bin/time.py');
-                if (!response.ok) throw new Error("Failed to load");
-                const text = await response.text();
-                document.getElementById('server-time').innerHTML = text;
-            }
-            loadTime();
-        </script>
+        <div id="unix-time">Loading unix time...</div>
+      
 
-        <img src="/cgi-bin/image.py" alt="image" class="center" />
         <img src="/images/cat.gif" alt="cat" class="center" />
 
         <form enctype="multipart/form-data" action="/cgi-bin/save_file.py" method="post">
@@ -58,8 +73,8 @@
         <button onclick="deleteFiles()">Delete Files</button>
         <script>
             async function deleteFiles() {
-                    const response = await fetch("/www/index.html", {method: "DELETE"});
-                    alert("successs");
+                    const response = await fetch("/upload/", {method: "DELETE"});
+                    alert("Successfully deleted files");
             }
         </script>
     </main>

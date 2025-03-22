@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:08:17 by ssian             #+#    #+#             */
-/*   Updated: 2025/03/13 15:13:32 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:55:26 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,7 +114,6 @@ void GlobalServer::checkTimeoutConnections(ConfigGlobal& configGlobal)
         Connection* conn = it->second;
         if (now - conn->lastActive > configGlobal.getTimeout()) 
         {
-            //std::cout << "Connection timed out: " << conn->fd << std::endl;
             toRemove.push_back(conn->fd);
         }
     }
@@ -157,8 +156,6 @@ void GlobalServer::startServer()
             std::cerr << "Error: epoll_wait" << std::endl; 
             throw exception();
         }
-
-        //std::cerr << "connections: " << connections.size() << std::endl;
 
         for (int i = 0; i < nunEventFds; i++) 
         {
@@ -355,8 +352,6 @@ void GlobalServer::checkForCGITimeout()
     }
 }
 
-
-/* Add a new client connection to epoll and store its context.*/
 void GlobalServer::addConnection(int client_fd) 
 {
     Connection* conn = new Connection;
@@ -398,7 +393,6 @@ void GlobalServer::removeConnection(Connection* conn)
     delete conn;
 }
 
-/*assign first server with the listen port to handle request if no matching servername found*/
 ConfigServer GlobalServer::parseConfigServer(std::string requestStr)
 {
     ConfigServer configServer;

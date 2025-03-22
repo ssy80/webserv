@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 09:41:45 by daong             #+#    #+#             */
-/*   Updated: 2025/03/15 09:41:48 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:56:05 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,8 @@ class Request {
 		string url;
 		string version;
 		map<string, string> headers;
-    map<string, string> formFields;  // For non-file form fields
-    map<string, string> files;       // For file contents (filename -> file content)
+    	map<string, string> formFields;
+    	map<string, string> files;
 
 		Request();
 		~Request();

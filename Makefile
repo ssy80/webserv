@@ -6,7 +6,7 @@
 #    By: daong <daong@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/15 09:42:59 by daong             #+#    #+#              #
-#    Updated: 2025/03/15 09:43:08 by daong            ###   ########.fr        #
+#    Updated: 2025/03/22 13:53:57 by daong            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,11 +16,6 @@ DIR_SERVER  = ./server
 DIR_REQ  = ./request
 DIR_RES  = ./response
 
-# SRC	= ${wildcard ${DIR_SERVER}/*.cpp} \
-# 		${wildcard ${DIR_REQ}/*.cpp} \
-# 		${wildcard ${DIR_RES}/*.cpp} \
-# 		${wildcard ${DIR}/*.cpp} \
-# 		${wildcard ${DIR_SERVER_CONFIG}/*.cpp}
 SRC	=	${DIR}/main.cpp \
 		${DIR_REQ}/Request.cpp \
 		${DIR_REQ}/RequestParser.cpp \
@@ -35,8 +30,6 @@ SRC	=	${DIR}/main.cpp \
 		${DIR_SERVER_CONFIG}/utilConfig.cpp \
 		${DIR_SERVER_CONFIG}/WebServerConfig.cpp
 
-
-# HEADER= ${wildcard ${INCLUDE}/*.hpp} 
 HEADER= ${INCLUDE}/AServer.hpp \
 		${INCLUDE}/ConfigGlobal.hpp \
 		${INCLUDE}/ConfigLocation.hpp \

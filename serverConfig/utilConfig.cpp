@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utilConfig.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 21:58:42 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 21:58:42 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:53:02 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,19 +40,18 @@ void printVecStr(std::vector<std::string> vecStr)
     } 
 }
 
-/* remove block[location] [/location]*/
 std::string removeBlock(std::string configStr, std::string startMarker, std::string endMarker)
 {
     size_t startPos = configStr.find(startMarker);
     while (startPos != std::string::npos) 
     {
         size_t endPos = configStr.find(endMarker, startPos);
-        if (endPos == std::string::npos)                            // No matching end marker found.
+        if (endPos == std::string::npos)
             break;
         
-        endPos += endMarker.length();                               // Move endPos to include the entire end marker.
-        configStr.erase(startPos, endPos - startPos);               // Erase the block from the configuration.
-        startPos = configStr.find(startMarker);                     // Look for the next "[location]" marker.
+        endPos += endMarker.length();
+        configStr.erase(startPos, endPos - startPos);
+        startPos = configStr.find(startMarker);
     }
     return (configStr);
 }
@@ -66,26 +65,22 @@ std::map<std::string, std::string> extractKeyValuePair(std::string configStr)
     while (std::getline(iss, line)) 
     {
         std::string trimmedLine = trim(line);
-        if (trimmedLine.empty())                                // Skip empty lines.
+        if (trimmedLine.empty())
             continue;  
         
-        std::string::size_type pos = trimmedLine.find('=');     // Find the '=' separator.
+        std::string::size_type pos = trimmedLine.find('=');
         if (pos == std::string::npos)
-            continue;                                           // Skip lines that don't contain '='.
+            continue;
         
-        std::string key = trim(trimmedLine.substr(0, pos));     // Extract key and value substrings, and trim them.
+        std::string key = trim(trimmedLine.substr(0, pos));
         std::string value = trim(trimmedLine.substr(pos + 1));
         
-        keyValueMap[key] = value;                               // Store the key-value pair in the map.
+        keyValueMap[key] = value;
     }
 
     return (keyValueMap);
 }
 
-/**
-    extract multiple between block lines in to a vector for further processing
-    e.g multiple [location][/location]
-*/
 std::vector<std::string> extractBetweenBlockVec(std::string configStr, std::string startMarker, std::string endMarker)
 {
     std::vector<std::string> betweenBlockVec;
@@ -93,18 +88,18 @@ std::vector<std::string> extractBetweenBlockVec(std::string configStr, std::stri
     std::string line;
     bool inBlock = false;
     std::string blockStr;
-    std::istringstream iss(configStr);                   //read str
+    std::istringstream iss(configStr);
 
     while (std::getline(iss, line)) 
     {
         std::string trimmed = trim(line);
-        if (trimmed == startMarker)                      // "[location]"
+        if (trimmed == startMarker)
         {
             inBlock = true;
-            continue;                                   // Skip the marker line.
+            continue;
         }
 
-        if (trimmed == endMarker)                       // "[/location]"
+        if (trimmed == endMarker)
         {
             inBlock = false;
             std::vector<std::string>::iterator it;
@@ -112,14 +107,14 @@ std::vector<std::string> extractBetweenBlockVec(std::string configStr, std::stri
             {
                 blockStr = blockStr + '\n' + (*it);
             }
-            betweenBlockVec.push_back(blockStr);         //add to vector each block lines in a str
-            blockStr = "";                               //clear for next block use
+            betweenBlockVec.push_back(blockStr);
+            blockStr = "";
             blockLines.clear(); 
         }
 
         if (inBlock) 
         {
-            blockLines.push_back(trimmed);               //add line to same block vec
+            blockLines.push_back(trimmed);
         }
     }
 
@@ -137,15 +132,15 @@ std::string extractBlock(std::string configStr, std::string startMarker, std::st
     while (std::getline(iss, line)) 
     {
         std::string trimmed = trim(line);
-        if (trimmed == startMarker)                       //"[global]"
+        if (trimmed == startMarker)
         {
             inBlock = true;
-            continue;                                    //check next line
+            continue;
         }
-        if (trimmed == endMarker)                        //"[/global]"
+        if (trimmed == endMarker)
         {
             inBlock = false;
-            break;                                       // Stop reading, only look for 1 block
+            break;
         }
         if (inBlock) 
         {
@@ -153,7 +148,7 @@ std::string extractBlock(std::string configStr, std::string startMarker, std::st
         }
     }
 
-    for (std::vector<std::string>::iterator it = blockLines.begin(); it != blockLines.end(); it++)   //convert lines in vector to a string 
+    for (std::vector<std::string>::iterator it = blockLines.begin(); it != blockLines.end(); it++)
     {
         blockStr = blockStr + '\n' + (*it);
     }
@@ -166,53 +161,53 @@ int parseContentLength(const std::string& request)
 {
     std::string header = "Content-Length:";
     size_t pos = request.find(header);
-    if (pos == std::string::npos)                                                   // Header field "Content-Length:" not found.
+    if (pos == std::string::npos)
         return (0);                                                  
     
-    pos += header.size();                                                           // Move position past "Content-Length:".
+    pos += header.size();
     
-    while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))  // Skip any whitespace after the header.
+    while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))
     {
         pos++;
     }
     
-    size_t end = request.find("\r\n", pos);                                         // Find the end of the line (CRLF).
+    size_t end = request.find("\r\n", pos);
     if (end == std::string::npos) 
     {
         end = request.size();
     }
     
-    std::string valueStr = request.substr(pos, end - pos);                         // Extract the substring containing the numeric value.
+    std::string valueStr = request.substr(pos, end - pos);
     if (!isValidInt(valueStr))
         return (0);
 
-    int contentLength = std::atoi(valueStr.c_str());                               // Convert the string to an integer.
+    int contentLength = std::atoi(valueStr.c_str());
     return contentLength;
 }
 
 std::string parseHeaderField(const std::string& request, std::string field)
 {
     size_t pos = request.find(field);
-    if (pos == std::string::npos)                                                   // Header not found.
+    if (pos == std::string::npos)
     {
         return "";                                                 
     }
     
-    pos += field.size();                                                           // Move position past field = "Content-Length:".
+    pos += field.size();
     
     
-    while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))  // Skip any whitespace after the header.
+    while (pos < request.size() && (request[pos] == ' ' || request[pos] == '\t'))
     {
         pos++;
     }
     
-    size_t end = request.find("\r\n", pos);                                         // Find the end of the line (CRLF).
+    size_t end = request.find("\r\n", pos);
     if (end == std::string::npos) 
     {
         end = request.size();
     }
     
-    std::string valueStr = request.substr(pos, end - pos);                         // Extract the substring containing the numeric value.
+    std::string valueStr = request.substr(pos, end - pos);
     return (valueStr);
 }
 
@@ -260,7 +255,6 @@ bool isValidPort(std::string portStr)
         return (false);
 }
 
-// int must >= 0 <=int_max
 bool isValidInt(std::string valueStr)
 {
     try 
@@ -276,7 +270,6 @@ bool isValidInt(std::string valueStr)
     }
 }
 
-
 std::string readFile(std::string configFile)
 {
     std::string fileStr;
@@ -289,7 +282,7 @@ std::string readFile(std::string configFile)
         throw exception();
     }
       
-    if (S_ISDIR(info.st_mode))                                              // Check if it's a directory
+    if (S_ISDIR(info.st_mode))
     {
         std::cerr << "Error: config file is a directory" << std::endl;
         throw exception();
@@ -320,7 +313,7 @@ bool isDir(std::string filepath)
         return (false);
     }
       
-    if (S_ISDIR(info.st_mode))                                              // Check if it's a directory
+    if (S_ISDIR(info.st_mode))
     {
         return (true);
     }
@@ -328,7 +321,6 @@ bool isDir(std::string filepath)
     return (false);
 }
 
-/*split "Host: example.com:8080" by :*/
 std::vector<std::string> splitHost(std::string hostStr)
 {
     std::vector<std::string> hostVec;
@@ -336,37 +328,35 @@ std::vector<std::string> splitHost(std::string hostStr)
     std::string::size_type pos;
     
     pos = hostStr.find(':', start);
-    while (pos != std::string::npos)                                      // Loop until no more ':' characters are found
+    while (pos != std::string::npos)
     {
         hostVec.push_back(trim(hostStr.substr(start, pos - start)));
         start = pos + 1;
         pos = hostStr.find(':', start);
     }
-    hostVec.push_back(trim(hostStr.substr(start)));                        // Add the final token after the last ':'
+    hostVec.push_back(trim(hostStr.substr(start)));
     return (hostVec);
 }
 
-/* check hostStr contain : , host:port, e.g localhost:8080*/
 bool isValidHostPort(std::string hostStr)
 {
     std::string::size_type start = 0;
     std::string::size_type pos;
 
     pos = hostStr.find(':', start);
-    if (pos == std::string::npos)                                           //no have ':'
+    if (pos == std::string::npos)
     {
         return (false);
     }  
     return (true);
 }
 
-/*line = "hello.com localhost example.com" findStr="localhost"*/
 bool isContainIn(std::string line, std::string findStr)
 {
     std::istringstream iss(line);
     std::string token;
 
-    while (iss >> token)                        // Split by whitespace and check each token.
+    while (iss >> token)
     {
         if (token == findStr) 
         {
@@ -376,19 +366,17 @@ bool isContainIn(std::string line, std::string findStr)
     return (false);
 }
 
-
-// Check if the URL begins with the requestPath and remove the requestPath portion from the URL and append the rest to the root.
 std::string replacePath(const std::string& url, const std::string& requestPath, const std::string& root) 
 {
     if (url.compare(0, requestPath.size(), requestPath) == 0) 
     {
-        if (url.substr(requestPath.size()).find("/") == 0)                 //starts with "/"
+        if (url.substr(requestPath.size()).find("/") == 0)
         {
             return (root + url.substr(requestPath.size())); 
         }
         else
         {
-            return (root + "/" + url.substr(requestPath.size()));          // add "/"
+            return (root + "/" + url.substr(requestPath.size()));
         }
     }
     return (url);                                          
@@ -407,15 +395,12 @@ std::string readServerFile(const std::string& filePath)
     return (contents.str());
 }
 
-
-/* get current time in milliseconds.*/
 long getCurrentTimeMs() 
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (long)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
-
 
 std::string getDirectoryPath(const std::string& filePath) 
 {

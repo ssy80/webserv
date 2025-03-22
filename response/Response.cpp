@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 09:42:26 by daong             #+#    #+#             */
-/*   Updated: 2025/03/15 09:42:29 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:55:34 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,13 +59,10 @@ Response::~Response()
 string Response::toString(){
 	stringstream ss;
 	ss << HTTPVERSION << " " <<this->statusCode << CLRF;
-	// content type
 	if (!this->contentType.empty())
 		ss << this->contentType << CLRF;
-	// extra header stuff
 	if (!this->misc.empty())
 		ss << this->misc;
-	// content length
 	ss << "Content-Length: " <<this->contentLength << CLRF << CLRF;
 	return ss.str();
 }

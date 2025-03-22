@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 19:53:07 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 19:53:08 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:54:45 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,6 @@ ConfigLocation& ConfigLocation::operator=(const ConfigLocation& other)
     return (*this);
 }
 
-//should not have listen, server_name, max_body_size
 void ConfigLocation::parseConfigLocation(std::string configLocationStr)
 {
     this->keyValueMap = extractKeyValuePair(configLocationStr);

@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 09:42:21 by daong             #+#    #+#             */
-/*   Updated: 2025/03/15 09:42:24 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:49:22 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -370,6 +370,3 @@ string postUploadHandler(Request& req, ConfigServer& configServer, ConfigLocatio
           ->build()
           .toString();
 }
-
-// curl -F 'file=@./Makefile' http://localhost:8080/upload/ -i
-// curl -F 'file=@./www/images/42.png' http://localhost:8080/ -i

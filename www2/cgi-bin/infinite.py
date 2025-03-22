@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
 
+b=""
 while True:
-	print("loop")
+	b = b + "a"

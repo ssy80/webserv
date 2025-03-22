@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigServer.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 19:53:20 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 19:53:20 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:54:40 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,10 +47,6 @@ ConfigServer& ConfigServer::operator=(const ConfigServer& other)
     return (*this);
 }
 
-/** 1) get between [location][/location]
-    2) parse to ConfigLocation, add each ConfigLocation to this->configLocationVec 
-    3) remove all [location][/location] ftom configServerStr 
-    4) extract key/value to ConfigServer server's keyValueMap*/
 void ConfigServer::parseConfigServer(std::string configServerStr)
 {
     std::vector<std::string> configLocationStrVec = extractBetweenBlockVec(configServerStr, "[location]", "[/location]");
@@ -118,7 +114,6 @@ void ConfigServer::parseConfigServer(std::string configServerStr)
     }
 }
 
-/* check location must have at least one / root location  */
 bool ConfigServer::validate()
 {
     if (this->listen == -1 || this->max_body_size == -1)
@@ -170,7 +165,6 @@ const std::vector<ConfigLocation>& ConfigServer::getConfigLocationVec() const
     return (this->configLocationVec);
 }
 
-/* read default config file first [server] [error_page] */
 void ConfigServer::populateDefaultErrorPageMap()
 {
     std::string configFileStr;

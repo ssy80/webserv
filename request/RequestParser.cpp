@@ -6,7 +6,7 @@
 /*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 09:42:16 by daong             #+#    #+#             */
-/*   Updated: 2025/03/15 09:42:19 by daong            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:48:27 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,12 +17,14 @@ Request RequestParser::parseRequest(const string& rawRequest) {
 	Request request;
 	istringstream stream(rawRequest);
 	string line;
-	// Parse the request line
+	
+  // Parse the request line
 	if (getline(stream, line)) {
 		istringstream requestLine(line);
 		requestLine >> request.method >> request.url >> request.version;
 	}
-	// Parse headers
+	
+  // Parse headers
 	string contentType;
 	while (getline(stream, line) && !line.empty()) {
     if (line == "\r" || line == "\n" || line == CLRF) break;
@@ -32,14 +34,17 @@ Request RequestParser::parseRequest(const string& rawRequest) {
 			string headerValue = line.substr(colonPos + 1);
 			headerValue.erase(0, headerValue.find_first_not_of(" \t"));
 			request.headers[headerName] = headerValue;
-			// Capture Content-Type for multipart/form-data parsing
+			
+      // Capture Content-Type for multipart/form-data parsing
       if (headerName == "Content-Type") 
         contentType = headerValue;
     }
 	}
+  
   // If Content-Type is multipart/form-data, parse the body accordingly
   if (!contentType.empty() && contentType.find("multipart/form-data") != string::npos)
     parseMultipartFormData(stream, request, contentType);
+  
   // parse body part
   while (getline(stream, line))
     request.files["body"] += line;
@@ -56,6 +61,7 @@ void RequestParser::parsePartFormData(istringstream& stream, Request& request, c
   size_t pos;
   while (getline(stream, line)) {
     if (line.find(endpt) != string::npos) break;
+    
     // parsing of sub header
     if (i==0){
       pos = line.find("name=");
@@ -64,6 +70,7 @@ void RequestParser::parsePartFormData(istringstream& stream, Request& request, c
         name.clear();
         while (line[pos] != '"')
           name+=line.at(pos++);
+        
         // parsing filename into formfield
         pos = line.find("filename=");
         if (pos != string::npos){
@@ -76,17 +83,20 @@ void RequestParser::parsePartFormData(istringstream& stream, Request& request, c
       i++;
       continue;
     }
+    
     // skip the next line
     if (skip){
       skip = false;
       i++;
       continue;
     }
+    
     // if got multipart/form-data
     if (!content.empty() && content.find("multipart/form-data") != string::npos){
       parseMultipartFormData(stream, request, content);
       continue;
     }
+    
     // getting the content
       content += line + '\n';
       i++;
@@ -115,10 +125,12 @@ string RequestParser::extractFilename(const std::string& contentDisposition) {
 
 void RequestParser::parseMultipartFormData(istringstream& stream, Request& request, const string& contentType) {
   size_t boundaryPos = contentType.find("boundary=");
+  
   // No boundary found
   if (boundaryPos == string::npos) 
     return; 
   string boundary = contentType.substr(boundaryPos + 9);
+  
   // remove whitespace
   if (!boundary.empty() && boundary[boundary.size()-1] == '\r')
     boundary.erase(boundary.end()-1);

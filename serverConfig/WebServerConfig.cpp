@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServerConfig.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ssian <ssian@student.42singapore.sg>       +#+  +:+       +#+        */
+/*   By: daong <daong@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/22 19:53:45 by ssian             #+#    #+#             */
-/*   Updated: 2025/02/22 19:53:46 by ssian            ###   ########.fr       */
+/*   Updated: 2025/03/22 13:53:16 by daong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,6 @@ WebServerConfig& WebServerConfig::operator=(const WebServerConfig& other)
     return (*this);
 }
 
-/* read config file into string, parse the globalStr to key/value in ConfigGlobal, 
-   parse each server string to ConfigServer obj */
 void WebServerConfig::parseWebServerConfigFile(std::string configFile)
 {
     std::string configFileStr;
@@ -65,7 +63,6 @@ void WebServerConfig::parseWebServerConfigFile(std::string configFile)
     }
 }
 
-/*check only unique listening port for each servers*/
 bool WebServerConfig::validate()
 {
     std::vector<int> listenPortsVec;
