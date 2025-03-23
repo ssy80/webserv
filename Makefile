@@ -77,3 +77,9 @@ run: ${NAME}
 
 v : ${NAME}
 	valgrind ./${NAME}
+
+upload:
+	curl -F 'file=@./Makefile' http://localhost:8080/upload/ -i
+
+wrong:
+	curl -X POST -H "Content-Type: multipart/form-data" http://localhost:8080/upload/ -i
